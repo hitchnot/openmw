@@ -72,6 +72,8 @@ namespace MWDialogue
 
     void DialogueManager::clear()
     {
+        clearLuaChoices();
+        ++mDialogueSession;
         mKnownTopics.clear();
         mTalkedTo = false;
         mOriginalDisposition = 0;
@@ -146,6 +148,9 @@ namespace MWDialogue
         // Dialogue with dead actor (e.g. through script) should not be allowed.
         if (actor.getClass().getCreatureStats(actor).isDead())
             return false;
+
+        clearLuaChoices();
+        ++mDialogueSession;
 
         mLastTopic = ESM::RefId();
         // Note that we intentionally don't reset mPermanentDispositionChange
@@ -423,7 +428,7 @@ namespace MWDialogue
 
     void DialogueManager::keywordSelected(std::string_view keyword, ResponseCallback* callback)
     {
-        if (!mIsInChoice)
+        if (!isInChoice())
         {
             const ESM::Dialogue* dialogue = searchDialogue(ESM::RefId::stringRefId(keyword));
             if (dialogue && dialogue->mType == ESM::Dialogue::Topic)
@@ -433,13 +438,10 @@ namespace MWDialogue
         }
     }
 
-    bool DialogueManager::isInChoice() const
-    {
-        return mIsInChoice;
-    }
-
     void DialogueManager::goodbyeSelected()
     {
+        clearLuaChoices();
+        ++mDialogueSession;
         // Apply disposition change to NPC's base disposition if we **think** we need to change something
         if ((mPermanentDispositionChange || mOriginalDisposition != mCurrentDisposition) && mActor.getClass().isNpc())
         {
@@ -461,7 +463,7 @@ namespace MWDialogue
         mCurrentDisposition = 0;
     }
 
-    void DialogueManager::questionAnswered(int answer, ResponseCallback* callback)
+    void DialogueManager::answerVanilla(int answer, ResponseCallback* callback)
     {
         mChoice = answer;
 
@@ -510,7 +512,8 @@ namespace MWDialogue
 
     void DialogueManager::addChoice(std::string_view text, int choice)
     {
-        mIsInChoice = true;
+        if (!isLuaChoiceId(choice))
+            mIsInChoice = true;
         mChoices.emplace_back(text, choice);
     }
 
@@ -526,6 +529,7 @@ namespace MWDialogue
 
     void DialogueManager::goodbye()
     {
+        clearLuaChoices();
         mIsInChoice = false;
         mGoodbye = true;
     }

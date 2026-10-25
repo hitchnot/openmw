@@ -28,6 +28,7 @@ NPC,CREATURE,PLAYER: scripts/omw/combat/interface.lua
 
 # User interface
 PLAYER: scripts/omw/ui.lua
+PLAYER: scripts/omw/dialogue.lua
 
 # Lua console
 MENU: scripts/omw/console/menu.lua

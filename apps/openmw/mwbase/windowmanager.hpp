@@ -133,6 +133,11 @@ namespace MWBase
 
         virtual MWGui::GuiMode getMode() const = 0;
         virtual bool containsMode(MWGui::GuiMode) const = 0;
+        virtual MWWorld::Ptr getDialogueActor() const = 0;
+        virtual void addDialogueResponse(const std::string& title, const std::string& text, bool teachTopics) = 0;
+        virtual bool canSelectDialogueTopic(std::string_view topicId) const = 0;
+        virtual void selectDialogueTopic(const std::string& topicId) = 0;
+        virtual void closeDialogue() = 0;
 
         virtual bool isGuiMode() const = 0;
 

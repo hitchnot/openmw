@@ -75,7 +75,7 @@ namespace MWLua
 
     sol::table initCoreApiExtensions(sol::state_view lua)
     {
-        return LuaUtil::makeReadOnly(lua.create_table_with("watch", 1, "ipc", 1));
+        return LuaUtil::makeReadOnly(lua.create_table_with("watch", 1, "ipc", 1, "dialogue", 1));
     }
 
     sol::table initCorePackage(const Context& context)

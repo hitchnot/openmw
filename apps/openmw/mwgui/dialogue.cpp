@@ -16,6 +16,7 @@
 
 #include "../mwbase/dialoguemanager.hpp"
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
@@ -549,6 +550,7 @@ namespace MWGui
     {
         if (MWBase::Environment::get().getWindowManager()->containsMode(GM_Dialogue))
             return;
+        MWBase::Environment::get().getDialogueManager()->clearLuaChoices();
         // Reset history
         mHistoryContents.clear();
     }
@@ -744,11 +746,13 @@ namespace MWGui
 
     void DialogueWindow::onTopicActivated(const std::string& topicId)
     {
-        if (mGoodbye)
+        if (mGoodbye || MWBase::Environment::get().getDialogueManager()->isInChoice())
             return;
 
+        const MWWorld::Ptr actor = mPtr;
         MWBase::Environment::get().getDialogueManager()->keywordSelected(topicId, mCallback.get());
         updateTopics();
+        MWBase::Environment::get().getLuaManager()->onDialogueTopicSelected(actor, topicId);
     }
 
     void DialogueWindow::onChoiceActivated(int id)

@@ -159,6 +159,11 @@ namespace MWGui
 
         GuiMode getMode() const override;
         bool containsMode(GuiMode mode) const override;
+        MWWorld::Ptr getDialogueActor() const override;
+        void addDialogueResponse(const std::string& title, const std::string& text, bool teachTopics) override;
+        bool canSelectDialogueTopic(std::string_view topicId) const override;
+        void selectDialogueTopic(const std::string& topicId) override;
+        void closeDialogue() override;
 
         bool isGuiMode() const override;
 

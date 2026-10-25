@@ -152,6 +152,10 @@ namespace MWGui
         bool setKeywords(const std::list<std::string>& keyWord);
 
         void addResponse(std::string_view title, std::string_view text, bool needMargin = true);
+        const MWWorld::Ptr& getActor() const { return mPtr; }
+        bool canSelectTopic(std::string_view topicId) const;
+        void selectTopic(const std::string& topicId);
+        void closeDialogue();
 
         void addMessageBox(std::string_view text);
 

@@ -3,11 +3,17 @@
 
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 #include <cstdint>
+
+namespace MWDialogue
+{
+    struct LuaChoice;
+}
 
 namespace Loading
 {
@@ -61,6 +67,12 @@ namespace MWBase
 
         virtual void addChoice(std::string_view text, int choice) = 0;
         virtual const std::vector<std::pair<std::string, int>>& getChoices() const = 0;
+
+        virtual void addLuaChoices(const std::string& offerId,
+            const std::vector<MWDialogue::LuaChoice>& choices, bool exclusive) = 0;
+        virtual void clearLuaChoices(const std::optional<std::string>& offerId = std::nullopt) = 0;
+        virtual std::uint64_t dialogueSession() const = 0;
+        virtual void addTopicsFromText(const std::string& text) = 0;
 
         virtual bool isGoodbye() const = 0;
 

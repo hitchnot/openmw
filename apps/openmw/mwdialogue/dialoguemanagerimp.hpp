@@ -17,6 +17,7 @@
 #include "../mwscript/compilercontext.hpp"
 #include "../mwworld/ptr.hpp"
 
+#include "dialoguechoices.hpp"
 #include "keywordsearch.hpp"
 
 namespace ESM
@@ -59,13 +60,21 @@ namespace MWDialogue
 
         std::vector<std::pair<std::string, int>> mChoices;
 
+        struct LuaChoiceEntry
+        {
+            ChoiceSelection mSelection;
+            bool mExclusive;
+        };
+        std::map<int, LuaChoiceEntry> mLuaChoices;
+        int mNextLuaChoice = sLuaChoiceBegin;
+        std::uint64_t mDialogueSession = 0;
+
         int mOriginalDisposition;
         int mCurrentDisposition;
         int mPermanentDispositionChange;
 
         const MWDialogue::KeywordSearch& getKeywordSearch() const;
         std::vector<ESM::RefId> parseTopicIdsFromText(const std::string& text) const;
-        void addTopicsFromText(const std::string& text);
 
         void updateActorKnownTopics();
         void updateGlobals();
@@ -79,6 +88,10 @@ namespace MWDialogue
         const ESM::Dialogue* searchDialogue(const ESM::RefId& id);
 
         void updateOriginalDisposition();
+
+    protected:
+        virtual void answerVanilla(int answer, ResponseCallback* callback);
+        virtual void emitChoiceSelected(const ChoiceSelection& selection);
 
     public:
         DialogueManager(const Compiler::Extensions& extensions, Translation::Storage& translationDataStorage);
@@ -98,6 +111,10 @@ namespace MWDialogue
 
         void addChoice(std::string_view text, int choice) override;
         const std::vector<std::pair<std::string, int>>& getChoices() const override;
+        void addLuaChoices(const std::string& offerId, const std::vector<LuaChoice>& choices, bool exclusive) override;
+        void clearLuaChoices(const std::optional<std::string>& offerId = std::nullopt) override;
+        std::uint64_t dialogueSession() const override { return mDialogueSession; }
+        void addTopicsFromText(const std::string& text) override;
 
         bool isGoodbye() const override;
 

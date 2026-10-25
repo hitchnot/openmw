@@ -13,6 +13,7 @@
 #include <components/settings/values.hpp>
 
 #include "context.hpp"
+#include "dialoguebindings_ext.hpp"
 #include "luamanagerimp.hpp"
 
 #include "../mwbase/environment.hpp"
@@ -73,6 +74,8 @@ namespace MWLua
         MWBase::WindowManager* windowManager = MWBase::Environment::get().getWindowManager();
 
         sol::table api(lua, sol::create);
+        if (!menu)
+            api["dialogue"] = initDialogueUiPackage(context);
         api["_setHudVisibility"] = [luaManager = context.mLuaManager](bool state) {
             luaManager->addAction([state] { MWBase::Environment::get().getWindowManager()->setHudVisibility(state); });
         };

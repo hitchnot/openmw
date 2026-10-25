@@ -95,6 +95,9 @@ namespace MWBase
             const MWWorld::Ptr& actor, const ESM::DialInfo& info, const ESM::Dialogue& record)
             = 0;
         virtual void questUpdated(const ESM::RefId& questId, int stage) = 0;
+        virtual void onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId) = 0;
+        virtual void onDialogueChoiceSelected(const MWWorld::Ptr& actor, const std::string& offerId,
+            const std::string& choiceId, bool lua) = 0;
         // `arg` is either forwarded from MWGui::pushGuiMode or empty
         virtual void uiModeChanged(const MWWorld::Ptr& arg) = 0;
         virtual void savePermanentStorage(const std::filesystem::path& userConfigPath) = 0;

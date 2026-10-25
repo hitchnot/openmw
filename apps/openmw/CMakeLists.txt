@@ -32,7 +32,7 @@ add_openmw_dir (mwinput
     )
 
 add_openmw_dir (mwgui
-    layout textinput widgets race class birth review windowmanagerimp console dialogue
+    layout textinput widgets race class birth review windowmanagerimp console dialogue dialogue_ext
     windowbase statswindow messagebox journalwindow charactercreation
     mapwindow windowpinnablebase tooltips scrollwindow bookwindow resourceskin
     formatting inventorywindow container hud countdialog tradewindow settingswindow
@@ -48,7 +48,7 @@ add_openmw_dir (mwgui
     )
 
 add_openmw_dir (mwdialogue
-    dialoguemanagerimp journalimp journalentry quest topic filter selectwrapper keywordsearch scripttest
+    dialoguemanagerimp dialoguechoices journalimp journalentry quest topic filter selectwrapper keywordsearch scripttest
     )
 
 add_openmw_dir (mwscript
@@ -69,7 +69,7 @@ add_openmw_dir (mwlua
     types/potion types/ingredient types/misc types/repair types/armor types/light types/static
     types/clothing types/levelledlist types/terminal magictypebindings
     watch/watchmanager watch/watchbindings
-    ipcbindings
+    ipcbindings dialoguebindings_ext
     )
 
 add_openmw_dir (mwsound

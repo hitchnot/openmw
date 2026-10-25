@@ -156,6 +156,7 @@ set(BUILTIN_DATA_FILES
     scripts/omw/skillhandlers.lua
     scripts/omw/crimes.lua
     scripts/omw/ui.lua
+    scripts/omw/dialogue.lua
     scripts/omw/usehandlers.lua
     scripts/omw/worldeventhandlers.lua
     scripts/omw/input/settings.lua
