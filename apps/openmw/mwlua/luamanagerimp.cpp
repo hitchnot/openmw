@@ -78,6 +78,7 @@ namespace MWLua
 
     LuaManager::LuaManager(const VFS::Manager* vfs, const std::filesystem::path& libsDir)
         : mLua(vfs, &mConfiguration, createLuaStateSettings())
+        , mIpc(static_cast<std::size_t>(Settings::lua().mDmoIpcMaxQueue.get()))
     {
         Log(Debug::Info) << "Lua version: " << LuaUtil::getLuaVersion();
         mLua.addInternalLibSearchPath(libsDir);
@@ -92,6 +93,7 @@ namespace MWLua
 
     LuaManager::~LuaManager()
     {
+        mIpc.clear();
         LuaUi::clearSettings();
     }
 
@@ -267,6 +269,7 @@ namespace MWLua
             for (CallbackWithData& c : mQueuedCallbacks)
                 c.mCallback.tryCall(c.mArg);
             mQueuedCallbacks.clear();
+            mIpc.update();
 
             // Run engine handlers
             mEngineEvents.callEngineHandlers();
@@ -386,6 +389,7 @@ namespace MWLua
 
     void LuaManager::clear()
     {
+        mIpc.clear();
         mWatches.clear();
         LuaUi::clearGameInterface();
         mUiResourceManager.clear();

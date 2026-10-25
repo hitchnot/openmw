@@ -7,6 +7,8 @@ file(GLOB UNITTEST_SRC_FILES
     options.cpp
 
     dmo/watch_predicate_test.cpp
+    dmo/ipc_queue_test.cpp
+    dmo/ipc_socket_test.cpp
 
     mwworld/teststore.cpp
     mwworld/testduration.cpp

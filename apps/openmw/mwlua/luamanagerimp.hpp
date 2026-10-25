@@ -19,6 +19,7 @@
 
 #include "engineevents.hpp"
 #include "globalscripts.hpp"
+#include "ipcbindings.hpp"
 #include "loadscripts.hpp"
 #include "localscripts.hpp"
 #include "luaevents.hpp"
@@ -185,6 +186,7 @@ namespace MWLua
         bool isSynchronizedUpdateRunning() const { return mRunningSynchronizedUpdates; }
 
         Watch::Manager& watches() { return mWatches; }
+        IpcManager& ipc() { return mIpc; }
 
     private:
         void initConfiguration(bool reload);
@@ -213,6 +215,7 @@ namespace MWLua
         std::vector<LuaUtil::ScriptsContainerWeakPtr> mQueuedAutoStartedScripts;
         ObjectLists mObjectLists;
         Watch::Manager mWatches;
+        IpcManager mIpc;
 
         MWWorld::Ptr mPlayer;
 

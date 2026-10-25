@@ -14,6 +14,7 @@
 #include "corebindings.hpp"
 #include "debugbindings.hpp"
 #include "inputbindings.hpp"
+#include "ipcbindings.hpp"
 #include "localscripts.hpp"
 #include "markupbindings.hpp"
 #include "menuscripts.hpp"
@@ -47,12 +48,14 @@ namespace MWLua
     {
         initObjectBindingsForGlobalScripts(context);
         initCellBindingsForGlobalScripts(context);
-        return {
+        std::map<std::string, sol::object> packages{
             { "openmw.core", initCorePackage(context) },
             { "openmw.types", initTypesPackage(context) },
             { "openmw.world", initWorldPackage(context) },
             { "openmw.watch", initWatchPackage(context) },
         };
+        addIpcPackage(packages, context);
+        return packages;
     }
 
     std::map<std::string, sol::object> initLocalPackages(const Context& context)
@@ -70,7 +73,7 @@ namespace MWLua
 
     std::map<std::string, sol::object> initPlayerPackages(const Context& context)
     {
-        return {
+        std::map<std::string, sol::object> packages{
             { "openmw.ambient", initAmbientPackage(context) },
             { "openmw.camera", initCameraPackage(context.sol()) },
             { "openmw.debug", initDebugPackage(context) },
@@ -78,6 +81,8 @@ namespace MWLua
             { "openmw.postprocessing", initPostprocessingPackage(context) },
             { "openmw.ui", initUserInterfacePackage(context) },
         };
+        addIpcPackage(packages, context);
+        return packages;
     }
 
     std::map<std::string, sol::object> initMenuPackages(const Context& context)

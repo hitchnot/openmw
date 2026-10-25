@@ -57,6 +57,10 @@ list(APPEND COMPONENT_FILES "${OpenMW_BINARY_DIR}/${OSG_PLUGIN_CHECKER_CPP_FILE}
 
 # source files
 
+add_component_dir (ipc
+    connection queue worker
+    )
+
 add_component_dir (lua
     luastate scriptscontainer asyncpackage utilpackage serialization configuration l10n storage utf8
     shapes/box inputactions yamlloader scripttracker luastateptr
@@ -664,7 +668,7 @@ if (OSG_STATIC AND CMAKE_SYSTEM_NAME MATCHES "Linux")
 endif()
 
 if (WIN32)
-    target_link_libraries(components shlwapi)
+    target_link_libraries(components shlwapi ws2_32)
 endif()
 
 # Fix for not visible pthreads functions for linker with glibc 2.15

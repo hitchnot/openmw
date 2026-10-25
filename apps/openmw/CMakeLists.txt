@@ -69,6 +69,7 @@ add_openmw_dir (mwlua
     types/potion types/ingredient types/misc types/repair types/armor types/light types/static
     types/clothing types/levelledlist types/terminal magictypebindings
     watch/watchmanager watch/watchbindings
+    ipcbindings
     )
 
 add_openmw_dir (mwsound

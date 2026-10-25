@@ -18,6 +18,10 @@ namespace Settings
     {
         using WithIndex::WithIndex;
 
+        SettingValue<bool> mDmoIpcEnabled{ mIndex, "Lua", "dmo ipc enabled", false };
+        SettingValue<int> mDmoIpcMaxQueue{ mIndex, "Lua", "dmo ipc max queue", 4096, makeMaxSanitizerInt(1) };
+        SettingValue<bool> mDmoHooksSpellCastAllActors{ mIndex, "Lua", "dmo hooks spell cast all actors", false };
+
         SettingValue<bool> mLuaDebug{ mIndex, "Lua", "lua debug" };
         SettingValue<int> mLuaNumThreads{ mIndex, "Lua", "lua num threads", makeEnumSanitizerInt({ 0, 1 }) };
         SettingValue<bool> mLuaProfiler{ mIndex, "Lua", "lua profiler" };
