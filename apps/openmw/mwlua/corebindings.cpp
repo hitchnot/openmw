@@ -73,6 +73,11 @@ namespace MWLua
             api["getRealFrameDuration"] = []() { return MWBase::Environment::get().getFrameDuration(); };
     }
 
+    sol::table initCoreApiExtensions(sol::state_view lua)
+    {
+        return LuaUtil::makeReadOnly(lua.create_table_with("watch", 1));
+    }
+
     sol::table initCorePackage(const Context& context)
     {
         auto lua = context.sol();
@@ -82,6 +87,7 @@ namespace MWLua
 
         sol::table api(lua, sol::create);
         api["API_REVISION"] = Version::getLuaApiRevision(); // specified in CMakeLists.txt
+        api["API_EXTENSIONS"] = initCoreApiExtensions(lua);
         api["contentFiles"] = initContentFilesBindings(lua);
         api["getFormId"] = [](std::string_view contentFile, unsigned int index) -> std::string {
             const std::vector<std::string>& contentList = MWBase::Environment::get().getWorld()->getContentFiles();

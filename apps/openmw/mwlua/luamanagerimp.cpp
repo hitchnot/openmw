@@ -39,6 +39,7 @@
 #include "playerscripts.hpp"
 #include "types/types.hpp"
 #include "userdataserializer.hpp"
+#include "watch/watchbindings.hpp"
 
 namespace MWLua
 {
@@ -246,6 +247,7 @@ namespace MWLua
         for (const LuaUtil::ScriptsContainerWeakPtr& ptr : mActiveLocalScripts)
             asLocal(ptr)->statsNextFrame();
 
+        updateWatches(mWatches, mLua, mLuaEvents, mGlobalSerializer.get());
         mLuaEvents.finalizeEventBatch();
 
         MWWorld::DateTimeManager& timeManager = *MWBase::Environment::get().getWorld()->getTimeManager();
@@ -384,6 +386,7 @@ namespace MWLua
 
     void LuaManager::clear()
     {
+        mWatches.clear();
         LuaUi::clearGameInterface();
         mUiResourceManager.clear();
         MWBase::Environment::get().getWorld()->getPostProcessor()->disableDynamicShaders();

@@ -11,6 +11,12 @@
 -- @field [parent=#core] #number API_REVISION
 
 ---
+-- Read-only table of optional engine extensions and their versions.
+-- This build provides `watch = 1`; absent keys indicate unavailable extensions.
+-- Extensions are versioned here independently of `API_REVISION`, which remains 129.
+-- @field [parent=#core] #table API_EXTENSIONS
+
+---
 -- Terminates the game and quits to the OS. Should be used only for testing purposes. Not available in load scripts.
 -- @function [parent=#core] quit
 

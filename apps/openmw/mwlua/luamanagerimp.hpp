@@ -25,6 +25,7 @@
 #include "menuscripts.hpp"
 #include "object.hpp"
 #include "objectlists.hpp"
+#include "watch/watchmanager.hpp"
 
 namespace MWLua
 {
@@ -183,6 +184,8 @@ namespace MWLua
 
         bool isSynchronizedUpdateRunning() const { return mRunningSynchronizedUpdates; }
 
+        Watch::Manager& watches() { return mWatches; }
+
     private:
         void initConfiguration(bool reload);
         LocalScripts* createLocalScripts(const MWWorld::Ptr& ptr,
@@ -209,6 +212,7 @@ namespace MWLua
         std::set<LuaUtil::ScriptsContainerWeakPtr, std::less<>> mActiveLocalScripts;
         std::vector<LuaUtil::ScriptsContainerWeakPtr> mQueuedAutoStartedScripts;
         ObjectLists mObjectLists;
+        Watch::Manager mWatches;
 
         MWWorld::Ptr mPlayer;
 

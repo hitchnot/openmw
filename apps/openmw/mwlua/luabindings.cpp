@@ -24,6 +24,7 @@
 #include "types/types.hpp"
 #include "uibindings.hpp"
 #include "vfsbindings.hpp"
+#include "watch/watchbindings.hpp"
 #include "worldbindings.hpp"
 
 namespace MWLua
@@ -50,6 +51,7 @@ namespace MWLua
             { "openmw.core", initCorePackage(context) },
             { "openmw.types", initTypesPackage(context) },
             { "openmw.world", initWorldPackage(context) },
+            { "openmw.watch", initWatchPackage(context) },
         };
     }
 
