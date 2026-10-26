@@ -16,12 +16,15 @@ file(GLOB UNITTEST_SRC_FILES
     mwworld/testduration.cpp
     mwworld/testtimestamp.cpp
     mwworld/testptr.cpp
+    mwworld/testlocalscripts.cpp
     mwworld/testweather.cpp
 
     mwdialogue/testkeywordsearch.cpp
 
     mwgui/tooltips.cpp
     mwgui/weightedsearch.cpp
+
+    mwlua/testmwscriptbindings.cpp
 
     mwscript/testscripts.cpp
 )

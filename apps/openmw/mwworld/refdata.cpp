@@ -19,7 +19,9 @@ namespace
         Flag_SuppressActivate = 1, // If set, activation will be suppressed and redirected to the OnActivate flag, which
                                    // can then be handled by a script.
         Flag_OnActivate = 2,
-        Flag_ActivationBuffered = 4
+        Flag_ActivationBuffered = 4,
+        // Local-script pause survives save/load, unlike activation interception.
+        Flag_LocalScriptDisabled = 8,
     };
 }
 
@@ -217,6 +219,22 @@ namespace MWWorld
     MWScript::Locals& RefData::getLocals()
     {
         return mLocals;
+    }
+
+    bool RefData::isLocalScriptEnabled() const
+    {
+        return !(mFlags & Flag_LocalScriptDisabled);
+    }
+
+    void RefData::setLocalScriptEnabled(bool enabled)
+    {
+        if (enabled == isLocalScriptEnabled())
+            return;
+        mChanged = true;
+        if (enabled)
+            mFlags &= ~Flag_LocalScriptDisabled;
+        else
+            mFlags |= Flag_LocalScriptDisabled;
     }
 
     bool RefData::isEnabled() const
