@@ -1922,6 +1922,9 @@ namespace MWWorld
         // only the player place items in the world, so no need to check actor
         PCDropped(dropped);
 
+        MWBase::Environment::get().getLuaManager()->objectPlaced(
+            dropped, getPlayerPtr(), pos.asVec3(), Misc::Convert::makeOsgQuat(pos.rot));
+
         return dropped;
     }
 
@@ -2043,6 +2046,10 @@ namespace MWWorld
 
         if (actor == mPlayer->getPlayer()) // Only call if dropped by player
             PCDropped(dropped);
+
+        MWBase::Environment::get().getLuaManager()->objectDropped(
+            dropped, actor, pos.asVec3(), Misc::Convert::makeOsgQuat(pos.rot));
+
         return dropped;
     }
 
