@@ -19,6 +19,7 @@
 
 #include <components/l10n/manager.hpp>
 
+#include <components/lua/util.hpp>
 #include <components/lua_ui/registerscriptsettings.hpp>
 #include <components/lua_ui/util.hpp>
 
@@ -253,13 +254,17 @@ namespace MWLua
         mLuaEvents.finalizeEventBatch();
 
         MWWorld::DateTimeManager& timeManager = *MWBase::Environment::get().getWorld()->getTimeManager();
-        if (!timeManager.isPaused())
-        {
-            mMenuScripts.processTimers(timeManager.getSimulationTime(), timeManager.getGameTime());
-            mGlobalScripts.processTimers(timeManager.getSimulationTime(), timeManager.getGameTime());
-            for (const LuaUtil::ScriptsContainerWeakPtr& ptr : mActiveLocalScripts)
-                asLocal(ptr)->processTimers(timeManager.getSimulationTime(), timeManager.getGameTime());
-        }
+        const double realTime = LuaUtil::getRealTime();
+
+        double simulationTime = timeManager.isPaused() ? 0 : timeManager.getSimulationTime();
+        double gameTime = timeManager.isPaused() ? 0 : timeManager.getGameTime();
+
+        // Always process real-time timers (runs even when paused), but only process game/simulation timers when not
+        // paused
+        mMenuScripts.processTimers(simulationTime, gameTime, realTime);
+        mGlobalScripts.processTimers(simulationTime, gameTime, realTime);
+        for (const LuaUtil::ScriptsContainerWeakPtr& ptr : mActiveLocalScripts)
+            asLocal(ptr)->processTimers(simulationTime, gameTime, realTime);
 
         // Run event handlers for events that were sent before `finalizeEventBatch`.
         mLuaEvents.callEventHandlers();
