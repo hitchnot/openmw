@@ -51,8 +51,13 @@ namespace MWDialogue
 
     void Quest::setIndex(int index)
     {
+        setIndex(index, [&] { MWBase::Environment::get().getLuaManager()->questUpdated(mTopic, index); });
+    }
+
+    void Quest::setIndex(int index, const std::function<void()>& notify)
+    {
         // The index must be set even if no related journal entry was found
-        MWBase::Environment::get().getLuaManager()->questUpdated(mTopic, index);
+        notify();
         mIndex = index;
     }
 

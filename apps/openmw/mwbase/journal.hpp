@@ -12,6 +12,11 @@
 #include "../mwdialogue/quest.hpp"
 #include "../mwdialogue/topic.hpp"
 
+namespace MWDialogue
+{
+    struct CustomJournalOptions;
+}
+
 namespace Loading
 {
     class Listener;
@@ -54,6 +59,10 @@ namespace MWBase
         virtual void addEntry(const ESM::RefId& id, int index, const MWWorld::Ptr& actor) = 0;
         ///< Add a journal entry.
         /// @param actor Used as context for replacing of escape sequences (%name, etc).
+
+        virtual void addCustomEntry(const ESM::RefId& id, std::string text,
+            const MWDialogue::CustomJournalOptions& options, const MWWorld::Ptr& actor) = 0;
+        ///< Add a mod-persisted entry to an existing Journal dialogue.
 
         virtual void setJournalIndex(const ESM::RefId& id, int index) = 0;
         ///< Set the journal index without adding an entry.

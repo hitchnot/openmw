@@ -70,6 +70,9 @@ namespace MWDialogue
 
         StampedJournalEntry(const ESM::JournalEntry& record);
 
+        StampedJournalEntry(const ESM::RefId& topic, const ESM::RefId& infoId, std::string text, int day, int month,
+            int dayOfMonth, std::string actorName);
+
         void write(ESM::JournalEntry& entry) const;
 
         static StampedJournalEntry makeFromQuest(const ESM::RefId& topic, int index, const MWWorld::Ptr& actor);

@@ -1346,7 +1346,8 @@
 
 ---
 -- Identifier for this journal entry line. Is unique only within the @{#PlayerJournalTextEntry} it belongs to.
--- Has a counterpart in raw data game dialogue records at @{openmw_core#DialogueRecordInfo} held by @{openmw_core#Dialogue.journal}
+-- Record-backed entries have a counterpart at @{openmw_core#DialogueRecordInfo} held by @{openmw_core#Dialogue.journal}.
+-- Custom entries have a synthetic `dmo:j:<counter>` id and no info record.
 -- @field [parent=#PlayerJournalTextEntry] #string id
 
 ---
@@ -1362,6 +1363,28 @@
 -- @param self
 -- @param #number stage Quest stage
 -- @param openmw.core#GameObject actor (optional) The actor who is the source of the journal entry, it may be used in journal entries with variables such as `%name(The speaker's name)` or `%race(The speaker's race)`.
+
+---
+-- Adds custom text to an existing Journal dialogue. Global scripts only; the mutation is queued.
+-- Adds the entry to both the journal and the quest's entry list, with a synthetic `dmo:j:<counter>` id.
+-- Custom entries are omitted from engine saves. Persist their text and dates in mod data and re-add them on load.
+-- At save time, record the first following non-custom entry's id as `before`; restore in written order with `silent = true`.
+-- A quest handle whose Journal dialogue is missing raises an error naming the quest before anything is queued.
+-- Invalid ids in `Player.quests(player)[id]` retain the usual nil lookup result.
+-- @function [parent=#PLAYERQuest] addCustomJournalEntry
+-- @param self
+-- @param #string text Text to store. Without an actor it is stored verbatim, including on restoration.
+-- @param #CustomJournalOptions opts (optional) Date, position, stage and notification options.
+
+---
+-- @type CustomJournalOptions
+-- @field #number stage (optional) Sets the quest index, unless silent. Does not change its finished state.
+-- @field openmw.core#GameObject actor (optional) Context for replacing journal variables such as `%name` in text.
+-- @field #number day (optional) Days passed; defaults to the current game day when the action executes.
+-- @field #number month (optional) Month from 1 to 12; defaults to the current month.
+-- @field #number dayOfMonth (optional) Day within the month; defaults to the current day of the month.
+-- @field #string before (optional) Insert before the first matching info id in the journal; append if absent. The quest's list follows the same journal order.
+-- @field #boolean silent (optional) Suppresses the journal message box and the stage change; defaults to false.
 
 ---
 -- Get state of a control switch. I.e. is the player able to move/fight/jump/etc.

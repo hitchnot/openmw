@@ -5,6 +5,11 @@
 
 #include "quest.hpp"
 
+namespace MWWorld
+{
+    class GlobalVariableName;
+}
+
 namespace MWDialogue
 {
     /// \brief The player's journal
@@ -13,11 +18,17 @@ namespace MWDialogue
         TEntryContainer mJournal;
         TQuestContainer mQuests;
         TTopicContainer mTopics;
+        std::uint64_t mCustomEntryCounter = 0;
 
     private:
         Topic& getTopic(const ESM::RefId& id);
 
         bool isThere(const ESM::RefId& topicId, const ESM::RefId& infoId = ESM::RefId()) const;
+
+    protected:
+        virtual int getCustomJournalGlobal(MWWorld::GlobalVariableName name) const;
+        virtual void customJournalQuestUpdated(const ESM::RefId& id, int index);
+        virtual void showCustomJournalMessage();
 
     public:
         Journal();
@@ -33,6 +44,9 @@ namespace MWDialogue
         void addEntry(const ESM::RefId& id, int index, const MWWorld::Ptr& actor) override;
         ///< Add a journal entry.
         /// @param actor Used as context for replacing of escape sequences (%name, etc).
+
+        void addCustomEntry(const ESM::RefId& id, std::string text, const CustomJournalOptions& options,
+            const MWWorld::Ptr& actor) override;
 
         void setJournalIndex(const ESM::RefId& id, int index) override;
         ///< Set the journal index without adding an entry.

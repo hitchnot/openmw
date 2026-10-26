@@ -1,5 +1,7 @@
 #include "journalimp.hpp"
 
+#include "journalcustom.hpp"
+
 #include <iterator>
 
 #include <components/esm3/esmreader.hpp>
@@ -156,12 +158,12 @@ namespace MWDialogue
         std::size_t count = mQuests.size();
 
         for (const auto& [_, quest] : mQuests)
-            count += quest.size();
+            count += countPersistentJournalEntries(quest);
 
-        count += mJournal.size();
+        count += countPersistentJournalEntries(mJournal);
 
         for (const auto& [_, topic] : mTopics)
-            count += topic.size();
+            count += countPersistentJournalEntries(topic);
 
         return count;
     }
@@ -178,6 +180,8 @@ namespace MWDialogue
 
             for (const Entry& questEntry : quest)
             {
+                if (isCustomJournalEntry(questEntry.mInfoId))
+                    continue;
                 ESM::JournalEntry entry;
                 entry.mType = ESM::JournalEntry::Type_Quest;
                 entry.mTopic = quest.getTopic();
@@ -190,6 +194,8 @@ namespace MWDialogue
 
         for (const StampedJournalEntry& journalEntry : mJournal)
         {
+            if (isCustomJournalEntry(journalEntry.mInfoId))
+                continue;
             ESM::JournalEntry entry;
             entry.mType = ESM::JournalEntry::Type_Journal;
             journalEntry.write(entry);
@@ -202,6 +208,8 @@ namespace MWDialogue
         {
             for (const Entry& topicEntry : topic)
             {
+                if (isCustomJournalEntry(topicEntry.mInfoId))
+                    continue;
                 ESM::JournalEntry entry;
                 entry.mType = ESM::JournalEntry::Type_Topic;
                 entry.mTopic = topic.getTopic();

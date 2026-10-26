@@ -42,6 +42,9 @@ namespace MWDialogue
         ///< Add entry without checking for redundant entries or modifying the state of the
         /// topic otherwise
 
+        void insertEntry(const Entry& entry, const ESM::RefId& before);
+        ///< Insert before the first matching info id, or append if it is absent, without changing quest state.
+
         const ESM::RefId& getTopic() const;
 
         virtual std::string_view getName() const;

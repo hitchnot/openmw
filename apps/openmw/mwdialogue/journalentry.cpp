@@ -1,6 +1,7 @@
 #include "journalentry.hpp"
 
 #include <stdexcept>
+#include <utility>
 
 #include <components/esm3/journalentry.hpp>
 
@@ -120,6 +121,18 @@ namespace MWDialogue
         , mMonth(record.mMonth)
         , mDayOfMonth(record.mDayOfMonth)
     {
+    }
+
+    StampedJournalEntry::StampedJournalEntry(const ESM::RefId& topic, const ESM::RefId& infoId, std::string text,
+        int day, int month, int dayOfMonth, std::string actorName)
+        : mDay(day)
+        , mMonth(month)
+        , mDayOfMonth(dayOfMonth)
+    {
+        mTopic = topic;
+        mInfoId = infoId;
+        mText = std::move(text);
+        mActorName = std::move(actorName);
     }
 
     void StampedJournalEntry::write(ESM::JournalEntry& entry) const

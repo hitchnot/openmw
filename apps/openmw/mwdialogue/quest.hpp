@@ -3,6 +3,8 @@
 
 #include "topic.hpp"
 
+#include <functional>
+
 namespace ESM
 {
     struct QuestState;
@@ -30,6 +32,8 @@ namespace MWDialogue
 
         void setIndex(int index);
         ///< Calling this function with a non-existent index will throw an exception.
+
+        void setIndex(int index, const std::function<void()>& notify);
 
         bool isFinished() const;
         void setFinished(bool finished);

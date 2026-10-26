@@ -5,6 +5,7 @@
 #include <components/lua/util.hpp>
 
 #include "../birthsignbindings.hpp"
+#include "../journalbindings_ext.hpp"
 #include "../luamanagerimp.hpp"
 
 #include "apps/openmw/mwbase/dialoguemanager.hpp"
@@ -20,15 +21,6 @@
 
 namespace MWLua
 {
-    struct Quests
-    {
-        bool mMutable = false;
-    };
-    struct Quest
-    {
-        ESM::RefId mQuestId;
-        bool mMutable = false;
-    };
     struct Topics
     {
     };
@@ -43,18 +35,6 @@ namespace MWLua
 
 namespace sol
 {
-    template <>
-    struct is_automagical<MWLua::Quests> : std::false_type
-    {
-    };
-    template <>
-    struct is_automagical<MWLua::Quest> : std::false_type
-    {
-    };
-    template <>
-    struct is_automagical<MWBase::Journal> : std::false_type
-    {
-    };
     template <>
     struct is_automagical<MWLua::Topics> : std::false_type
     {
@@ -291,31 +271,9 @@ namespace MWLua
 
         player["quests"] = [](const Object& object) {
             verifyPlayer(object);
-            bool allowChanges = object.isGObject() || object.isSelfObject();
-            return Quests{ .mMutable = allowChanges };
+            return Quests(object);
         };
-        sol::usertype<Quests> quests = lua.new_usertype<Quests>("Quests");
-        quests[sol::meta_function::to_string] = [](const Quests& /*self*/) { return "Quests"; };
-        quests[sol::meta_function::index] = [](const Quests& self, std::string_view questId) -> sol::optional<Quest> {
-            ESM::RefId quest = ESM::RefId::deserializeText(questId);
-            const ESM::Dialogue* dial = MWBase::Environment::get().getESMStore()->get<ESM::Dialogue>().search(quest);
-            if (dial == nullptr || dial->mType != ESM::Dialogue::Journal)
-                return sol::nullopt;
-            return Quest{ .mQuestId = quest, .mMutable = self.mMutable };
-        };
-        quests[sol::meta_function::pairs] = [journal](const Quests& self) {
-            std::vector<ESM::RefId> ids;
-            for (const auto& [id, _] : journal->getQuests())
-                ids.push_back(id);
-            size_t i = 0;
-            return [ids = std::move(ids), i,
-                       allowChanges = self.mMutable]() mutable -> sol::optional<std::tuple<std::string, Quest>> {
-                if (i >= ids.size())
-                    return sol::nullopt;
-                const ESM::RefId& id = ids[i++];
-                return std::make_tuple(id.serializeText(), Quest{ .mQuestId = id, .mMutable = allowChanges });
-            };
-        };
+        addQuestListBindings(lua, journal);
 
         sol::usertype<Quest> quest = lua.new_usertype<Quest>("Quest");
         quest[sol::meta_function::to_string]
@@ -367,6 +325,9 @@ namespace MWLua
                 },
                 "addJournalEntryAction");
         };
+        addCustomJournalEntryBinding(quest, [context](std::function<void()> action) {
+            context.mLuaManager->addAction(std::move(action), "addCustomJournalEntryAction");
+        });
 
         player["CONTROL_SWITCH"]
             = LuaUtil::makeStrictReadOnly(LuaUtil::tableFromPairs<std::string_view, std::string_view>(lua,

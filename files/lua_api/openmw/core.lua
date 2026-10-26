@@ -12,7 +12,7 @@
 
 ---
 -- Read-only table of optional engine extensions and their versions.
--- This build provides `watch = 1`, `ipc = 1`, and `dialogue = 1`; absent keys indicate unavailable extensions.
+-- This build provides `watch = 1`, `ipc = 1`, `dialogue = 1`, and `journal_custom = 1`; absent keys indicate unavailable extensions.
 -- Extensions are versioned here independently of `API_REVISION`, which remains 129.
 -- @field [parent=#core] #table API_EXTENSIONS
 
