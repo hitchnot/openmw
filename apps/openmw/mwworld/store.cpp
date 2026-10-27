@@ -1011,6 +1011,11 @@ namespace MWWorld
         for (auto& [_, dial] : mStatic)
             dial.setUp();
 
+        refreshShared();
+    }
+
+    void Store<ESM::Dialogue>::refreshShared()
+    {
         mShared.clear();
         mShared.reserve(mStatic.size());
         for (auto& [_, dial] : mStatic)
@@ -1021,6 +1026,37 @@ namespace MWWorld
             [](const ESM::Dialogue* l, const ESM::Dialogue* r) -> bool { return l->mId < r->mId; });
 
         mKeywordSearchModFlag = true;
+        ++mGeneration;
+    }
+
+    const ESM::Dialogue& Store<ESM::Dialogue>::createDialogue(
+        const ESM::RefId& id, std::string_view name, ESM::Dialogue::Type type)
+    {
+        const ESM::Dialogue& dialogue = mOverlay.createDialogue(mStatic, id, name, type);
+        refreshShared();
+        return dialogue;
+    }
+
+    const ESM::DialInfo& Store<ESM::Dialogue>::insertInfo(
+        const ESM::RefId& dialogue, ESM::DialInfo info, const MWDialogue::InfoAnchor& anchor)
+    {
+        const ESM::DialInfo& inserted = mOverlay.insertInfo(mStatic, dialogue, std::move(info), anchor);
+        ++mGeneration;
+        return inserted;
+    }
+
+    void Store<ESM::Dialogue>::clearDynamic()
+    {
+        if (mOverlay.countSavedGameRecords() == 0)
+            return;
+        mOverlay.restore(mStatic);
+        refreshShared();
+    }
+
+    void Store<ESM::Dialogue>::readOverlay(ESM::ESMReader& reader, std::uint32_t type)
+    {
+        mOverlay.readRecord(mStatic, reader, type);
+        refreshShared();
     }
 
     const ESM::Dialogue* Store<ESM::Dialogue>::search(const ESM::RefId& id) const

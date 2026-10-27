@@ -287,6 +287,7 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
         writer.setDescription("");
 
         size_t recordCount = 1 // saved game header
+            + MWBase::Environment::get().getESMStore()->get<ESM::Dialogue>().countOverlayRecords()
             + MWBase::Environment::get().getJournal()->countSavedGameRecords()
             + MWBase::Environment::get().getLuaManager()->countSavedGameRecords()
             + MWBase::Environment::get().getWorld()->countSavedGameRecords()
@@ -310,6 +311,8 @@ void MWState::StateManager::saveGame(std::string_view description, const Slot* s
         slot->mProfile.save(writer);
         writer.endRecord(ESM::REC_SAVE);
 
+        // DMO's dialogues and infos come before the journal, so its entries find their infos on load.
+        MWBase::Environment::get().getESMStore()->get<ESM::Dialogue>().writeOverlay(writer);
         MWBase::Environment::get().getJournal()->write(writer, listener);
         MWBase::Environment::get().getDialogueManager()->write(writer, listener);
         // LuaManager::write should be called before World::write because world also saves
@@ -549,6 +552,8 @@ void MWState::StateManager::loadGame(const Character* character, const std::file
                 case ESM::REC_STAT:
                 case ESM::REC_DOOR:
                 case ESM::REC_PROB:
+                case ESM::REC_DMDL:
+                case ESM::REC_DMIF:
                     MWBase::Environment::get().getWorld()->readRecord(reader, n.toInt());
                     break;
 

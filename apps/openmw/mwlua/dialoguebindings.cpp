@@ -3,6 +3,7 @@
 #include "context.hpp"
 
 #include "apps/openmw/mwbase/environment.hpp"
+#include "apps/openmw/mwdialogue/dialogueoverlay.hpp"
 #include "apps/openmw/mwworld/esmstore.hpp"
 #include "apps/openmw/mwworld/store.hpp"
 
@@ -27,12 +28,25 @@ namespace
     class FilteredDialogueStore
     {
         const MWWorld::Store<ESM::Dialogue>& mDialogueStore;
-        std::vector<const ESM::Dialogue*> mIndex;
+        mutable std::vector<const ESM::Dialogue*> mIndex;
+        mutable std::uint64_t mGeneration;
+
+        // DMO creates and removes dialogues at runtime; the index follows the store's generation.
+        const std::vector<const ESM::Dialogue*>& index() const
+        {
+            if (mGeneration != mDialogueStore.getGeneration())
+            {
+                mIndex = makeIndex(mDialogueStore, type);
+                mGeneration = mDialogueStore.getGeneration();
+            }
+            return mIndex;
+        }
 
     public:
         explicit FilteredDialogueStore(const MWWorld::Store<ESM::Dialogue>& store)
             : mDialogueStore(store)
             , mIndex{ makeIndex(store, type) }
+            , mGeneration{ store.getGeneration() }
         {
         }
 
@@ -44,14 +58,14 @@ namespace
             return nullptr;
         }
 
-        const ESM::Dialogue* at(std::size_t index) const
+        const ESM::Dialogue* at(std::size_t position) const
         {
-            if (index >= mIndex.size())
+            if (position >= index().size())
                 return nullptr;
-            return mIndex[index];
+            return index()[position];
         }
 
-        std::size_t getSize() const { return mIndex.size(); }
+        std::size_t getSize() const { return index().size(); }
     };
 
     template <ESM::Dialogue::Type filter>
@@ -151,6 +165,10 @@ namespace
             = sol::readonly_property([](const ESM::DialInfo& rec) { return rec.mId.serializeText(); });
         recordInfoBindingsClass["text"]
             = sol::readonly_property([](const ESM::DialInfo& rec) -> std::string_view { return rec.mResponse; });
+        recordInfoBindingsClass["dmoOwned"] = sol::readonly_property(
+            [](const ESM::DialInfo& rec) { return MWDialogue::DialogueOverlay::isOwned(rec.mId); });
+        // Disabling an info arrives with DMO's editing of existing infos; no info is disabled before it.
+        recordInfoBindingsClass["disabled"] = sol::readonly_property([](const ESM::DialInfo&) { return false; });
         recordInfoBindingsClass["questStage"]
             = sol::readonly_property([](const ESM::DialInfo& rec) -> sol::optional<int> {
                   if (rec.mData.mType != ESM::Dialogue::Type::Journal)

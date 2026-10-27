@@ -12,7 +12,7 @@
 
 ---
 -- Read-only table of optional engine extensions and their versions.
--- This build provides `watch = 1`, `ipc = 1`, `dialogue = 1`, and `journal_custom = 1`; absent keys indicate unavailable extensions.
+-- This build provides `watch = 1`, `ipc = 1`, `dialogue = 1`, `journal_custom = 1` and `records = 1` (@{openmw.world#world.records}); absent keys indicate unavailable extensions.
 -- `events` lists the engine handlers this build fires outside any versioned extension: `onDropped` and `onPlaced`. An extension's version covers its own events.
 -- Extensions are versioned here independently of `API_REVISION`, which remains 129.
 -- @field [parent=#core] #table API_EXTENSIONS
@@ -1112,6 +1112,16 @@
 -- local aa = core.dialogue.topic.records['advancement'].infos[100].text
 -- @usage --Variable `bb` below is "sound/vo/a/f/fle_af003.mp3" in vanilla MW:
 -- local bb = core.dialogue.voice.records['flee'].infos[149].sound
+
+---
+-- True if DMO created this info entry through @{openmw.world#Records.insertInfo}: its id begins `dmo:`.
+-- Requires `core.API_EXTENSIONS.records`.
+-- @field [parent=#DialogueRecordInfo] #boolean dmoOwned
+
+---
+-- True if this info entry is disabled. No info entry is disabled in this build.
+-- Requires `core.API_EXTENSIONS.records`.
+-- @field [parent=#DialogueRecordInfo] #boolean disabled
 
 ---
 -- Quest stage (same as in @{openmw_types#PLAYERQuest.stage}) this info entry is associated with.

@@ -145,6 +145,10 @@ namespace ESM
         // format 21 - Random state in saved games.
         REC_RAND = esm3Recname("RAND"), // Random state.
 
+        // DMO's dialogue overlay in saved games; stock builds skip both.
+        REC_DMDL = esm3Recname("DMDL"), // A dialogue DMO created.
+        REC_DMIF = esm3Recname("DMIF"), // An info DMO inserted.
+
         REC_ATTR = esm3Recname("ATTR"), // Attribute
 
         REC_AACT4 = esm4Recname(ESM4::REC_AACT), // Action

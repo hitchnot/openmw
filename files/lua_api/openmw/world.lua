@@ -19,6 +19,45 @@
 -- @field [parent=#world] #MWScriptFunctions mwscript
 
 ---
+-- Dialogue records created at runtime (see @{#Records}). Requires `core.API_EXTENSIONS.records`.
+-- @field [parent=#world] #Records records
+
+---
+-- Creation of dialogues and their info entries. Each call returns at once and raises an error at once for a
+-- draft its mutation would refuse; the mutation itself takes effect after the current Lua update, and the next
+-- dialogue filter sees it. Created records are kept in saved games (records `DMDL` and `DMIF`, which a build
+-- without this extension skips) and removed by loading a save that predates them or by a new game.
+-- @type Records
+
+---
+-- Create a dialogue.
+-- A topic's id is its lower-case name and never begins `dmo:`; if a content file already has a topic of that
+-- id, info entries are appended to it and @{#Records.listDeltas} reports a conflict.
+-- A journal's id begins `dmo:q:` and a greeting's `dmo:g:`.
+-- @function [parent=#Records] createDialogue
+-- @param #table draft `{type = 'topic' | 'journal' | 'greeting', id = string, name = string}`
+-- @return #string The dialogue's id.
+
+---
+-- Insert an info entry into a dialogue created with @{#Records.createDialogue}.
+-- The draft's fields, all optional but `id`: `id` (begins `dmo:`), `text`, `resultScript`, `actor`, `race`,
+-- `class`, `faction`, `pcFaction`, `cell`, `disposition`, `journalIndex` (journal dialogues), `rank`, `pcRank`,
+-- `gender` (`'male'` or `'female'`), `questStatus` (`'none'`, `'name'`, `'finished'` or `'restart'`) and
+-- `conditions`, at most six of `{type, variable, operator, value}` where `type` is one of `global`, `local`,
+-- `journal`, `item`, `dead`, `not_id`, `not_faction`, `not_class`, `not_race`, `not_cell`, `not_local` (each
+-- naming its `variable`) or `choice`, and `operator` one of `==`, `!=`, `>`, `>=`, `<`, `<=`.
+-- @function [parent=#Records] insertInfo
+-- @param #string dialogueId
+-- @param #table info
+-- @param #table anchor `{after = infoId}`, `{before = infoId}` or `{at = 'front' | 'end'}`
+-- @return #string The info's id.
+
+---
+-- The dialogues and info entries created since the game was loaded or started, in the order they were created.
+-- @function [parent=#Records] listDeltas
+-- @return #list<#table> `{kind = 'dialogue' | 'info', dialogue = string, info = string?, op = 'created', conflict = string?}`
+
+---
 -- Functions related to MWScript.
 -- Calls that change MWScript state take effect after the current Lua update.
 -- @type MWScriptFunctions

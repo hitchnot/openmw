@@ -753,6 +753,11 @@ namespace MWWorld
                 mStoreImp->mRecNameToStore[type]->read(reader, true);
                 return true;
 
+            case ESM::REC_DMDL:
+            case ESM::REC_DMIF:
+                getWritable<ESM::Dialogue>().readOverlay(reader, type);
+                return true;
+
             case ESM::REC_DYNA:
                 reader.getSubNameIs("COUN");
                 if (reader.getFormatVersion() <= ESM::MaxActiveSpellTypeVersion)

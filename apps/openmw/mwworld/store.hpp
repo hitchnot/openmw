@@ -27,6 +27,8 @@
 #include <components/misc/rng.hpp>
 #include <components/misc/strings/algorithm.hpp>
 
+#include "../mwdialogue/dialogueoverlay.hpp"
+
 namespace ESM
 {
     struct LandTexture;
@@ -507,12 +509,30 @@ namespace MWWorld
 
         mutable bool mKeywordSearchModFlag{ true };
 
+        /// DMO's created dialogues and infos (docs: DMO engine-surfaces §4.1).
+        MWDialogue::DialogueOverlay mOverlay;
+        /// Moves whenever the set of dialogues changes, so views that index it rebuild.
+        std::uint64_t mGeneration = 0;
+
+        void refreshShared();
+
     public:
         Store();
 
         typedef SharedIterator<ESM::Dialogue> iterator;
 
         void setUp() override;
+
+        const ESM::Dialogue& createDialogue(const ESM::RefId& id, std::string_view name, ESM::Dialogue::Type type);
+        const ESM::DialInfo& insertInfo(
+            const ESM::RefId& dialogue, ESM::DialInfo info, const MWDialogue::InfoAnchor& anchor);
+        void clearDynamic() override;
+
+        const MWDialogue::DialogueOverlay& getOverlay() const { return mOverlay; }
+        std::uint64_t getGeneration() const { return mGeneration; }
+        std::size_t countOverlayRecords() const { return mOverlay.countSavedGameRecords(); }
+        void writeOverlay(ESM::ESMWriter& writer) const { mOverlay.write(mStatic, writer); }
+        void readOverlay(ESM::ESMReader& reader, std::uint32_t type);
 
         const ESM::Dialogue* search(const ESM::RefId& id) const;
         const ESM::Dialogue* find(const ESM::RefId& id) const;

@@ -48,7 +48,7 @@ add_openmw_dir (mwgui
     )
 
 add_openmw_dir (mwdialogue
-    dialoguemanagerimp dialoguechoices journalimp journalentry journalcustom quest topic filter selectwrapper keywordsearch scripttest
+    dialoguemanagerimp dialoguechoices dialogueoverlay journalimp journalentry journalcustom quest topic filter selectwrapper keywordsearch scripttest
     )
 
 add_openmw_dir (mwscript
@@ -69,7 +69,7 @@ add_openmw_dir (mwlua
     types/potion types/ingredient types/misc types/repair types/armor types/light types/static
     types/clothing types/levelledlist types/terminal magictypebindings
     watch/watchmanager watch/watchbindings
-    ipcbindings dialoguebindings_ext journalbindings_ext
+    ipcbindings dialoguebindings_ext journalbindings_ext recordsbindings_ext
     )
 
 add_openmw_dir (mwsound

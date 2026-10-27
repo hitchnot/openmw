@@ -14,6 +14,8 @@
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
+#include "../mwdialogue/dialogueoverlay.hpp"
+
 #include "../mwmechanics/npcstats.hpp"
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
@@ -93,25 +95,15 @@ namespace MWScript
                 MWBase::Journal* journal = MWBase::Environment::get().getJournal();
                 MWBase::DialogueManager* dialogueManager = MWBase::Environment::get().getDialogueManager();
 
-                for (const auto& dialogue : dialogues)
-                {
-                    if (dialogue.mType == ESM::Dialogue::Type::Journal)
-                    {
-                        for (const auto& journalInfo : dialogue.mInfoOrder.getOrderedInfo())
-                        {
-                            if (journalInfo.mQuestStatus != ESM::DialInfo::QS_Name)
-                                journal->addEntry(dialogue.mId, journalInfo.mData.mJournalIndex, playerPtr);
-                        }
-                    }
-                    else if (dialogue.mType == ESM::Dialogue::Type::Topic)
-                    {
-                        for (const auto& topicInfo : dialogue.mInfoOrder.getOrderedInfo())
-                        {
-                            journal->addTopic(dialogue.mId, topicInfo.mId, playerPtr);
-                        }
-                        dialogueManager->addTopic(dialogue.mId);
-                    }
-                }
+                MWDialogue::walkFillJournal(
+                    dialogues,
+                    [&](const ESM::Dialogue& dialogue, const ESM::DialInfo& info) {
+                        journal->addEntry(dialogue.mId, info.mData.mJournalIndex, playerPtr);
+                    },
+                    [&](const ESM::Dialogue& dialogue, const ESM::DialInfo& info) {
+                        journal->addTopic(dialogue.mId, info.mId, playerPtr);
+                    },
+                    [&](const ESM::Dialogue& dialogue) { dialogueManager->addTopic(dialogue.mId); });
             }
         };
 

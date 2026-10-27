@@ -38,6 +38,7 @@
 #include "context.hpp"
 #include "corebindings.hpp"
 #include "mwscriptbindings.hpp"
+#include "recordsbindings_ext.hpp"
 
 namespace MWLua
 {
@@ -161,6 +162,11 @@ namespace MWLua
         addWorldTimeBindings(api, context);
         addCellGetters(api, context);
         api["mwscript"] = initMWScriptBindings(context);
+        api["records"] = initDialogueRecordsBindings(context.sol(),
+            MWBase::Environment::get().getESMStore()->getWritable<ESM::Dialogue>(),
+            [luaManager = context.mLuaManager](std::function<void()> action) {
+                luaManager->addAction(std::move(action), "world.records");
+            });
 
         ObjectLists* objectLists = context.mObjectLists;
         api["activeActors"] = GObjectList{ objectLists->getActorsInScene() };
