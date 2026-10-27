@@ -87,6 +87,16 @@ namespace
                     writer.endRecord(ESM::REC_INFO);
                     previous = info.mId;
                 }
+                if (type == ESM::Dialogue::Topic)
+                {
+                    // A content file's own info whose id happens to carry DMO's prefix.
+                    ESM::DialInfo info = draft("dmo:content:1", "Content");
+                    info.mPrev = previous;
+                    info.mData.mType = type;
+                    writer.startRecord(ESM::REC_INFO);
+                    info.save(writer);
+                    writer.endRecord(ESM::REC_INFO);
+                }
             }
             writer.close();
             ESM::ESMReader reader;
@@ -180,6 +190,7 @@ namespace
             dialogues().insertInfo(
                 id("dmo:q:letter"), draft("dmo:a:1", "Lost"), InfoAnchor{ InfoAnchor::Kind::After, id("dmo:a:9") });
         });
+        refuses([&] { dialogues().insertInfo(id("dmo:q:letter"), draft("dmo:j:1", "Journal prefix"), end); });
         dialogues().insertInfo(id("dmo:q:letter"), draft("dmo:a:1", "Once"), end);
         refuses([&] { dialogues().insertInfo(id("dmo:q:letter"), draft("dmo:a:1", "Twice"), end); });
         EXPECT_EQ(dialogues().getOverlay().deltas().size(), 2);
@@ -199,6 +210,7 @@ namespace
         dialogues().clearDynamic();
         EXPECT_EQ(dialogues().search(id("background")), &background);
         EXPECT_EQ(ids(background), pristine);
+        EXPECT_EQ(pristine.back(), "dmo:content:1");
         EXPECT_EQ(inserted.mResponse, "Mine");
         EXPECT_TRUE(dialogues().getOverlay().deltas().empty());
     }
@@ -272,7 +284,7 @@ namespace
         EXPECT_EQ(read.mSelects[0].mFunction, ESM::DialogueCondition::Function_Journal);
         EXPECT_EQ(read.mSelects[0].mVariable, "ms_fargothring");
         EXPECT_EQ(ids(*dialogues().search(id("background"))),
-            (std::vector<std::string>{ "background:first", "dmo:a:4", "background:second" }));
+            (std::vector<std::string>{ "background:first", "dmo:a:4", "background:second", "dmo:content:1" }));
         const auto deltas = dialogues().getOverlay().deltas();
         ASSERT_EQ(deltas.size(), 7);
         EXPECT_EQ(deltas[2].mConflict, "content-file topic");
@@ -320,12 +332,14 @@ namespace
                 assert(records.insertInfo('the ring', {id = 'dmo:a:1', text = 'One', gender = 'female',
                     conditions = {{type = 'journal', variable = 'ms_fargothring', operator = '>=', value = 10}}},
                     {at = 'end'}) == 'dmo:a:1')
-                assert(records.insertInfo('the ring', {id = 'dmo:a:2', text = 'Two'}, {before = 'dmo:a:1'}) == 'dmo:a:2')
+                assert(records.insertInfo('the ring', {id = 'dmo:a:2', text = 'Two', faction = 'FFFF'},
+                    {before = 'dmo:a:1'}) == 'dmo:a:2')
                 for _, call in ipairs({
                     function() records.createDialogue({type = 'topic', id = 'The Ring', name = 'The Ring'}) end,
                     function() records.createDialogue({type = 'journal', id = 'quest', name = 'Quest'}) end,
                     function() records.createDialogue({type = 'voice', id = 'dmo:v', name = 'V'}) end,
                     function() records.insertInfo('the ring', {id = 'plain'}, {at = 'end'}) end,
+                    function() records.insertInfo('the ring', {id = 'dmo:j:1'}, {at = 'end'}) end,
                     function() records.insertInfo('the ring', {id = 'dmo:a:1'}, {at = 'end'}) end,
                     function() records.insertInfo('the ring', {id = 'dmo:a:3'}, {after = 'dmo:a:9'}) end,
                     function() records.insertInfo('the ring', {id = 'dmo:a:3'}, {at = 'middle'}) end,
@@ -350,6 +364,8 @@ namespace
         ASSERT_NE(ring, nullptr);
         EXPECT_EQ(ids(*ring), (std::vector<std::string>{ "dmo:a:2", "dmo:a:1" }));
         EXPECT_EQ(ring->mInfo.back().mData.mGender, ESM::DialInfo::Female);
+        EXPECT_TRUE(ring->mInfo.front().mFactionLess);
+        EXPECT_FALSE(ring->mInfo.back().mFactionLess);
         ASSERT_EQ(ring->mInfo.back().mSelects.size(), 1);
         EXPECT_EQ(ring->mInfo.back().mSelects[0].mComparison, ESM::DialogueCondition::Comp_Ge);
 
@@ -364,5 +380,45 @@ namespace
                 error = result.get<sol::error>().what();
         });
         EXPECT_TRUE(error.empty()) << error;
+    }
+
+    TEST_F(dmoDialogueOverlay, MutationsQueuedBeforeALoadAreDropped)
+    {
+        std::vector<std::function<void()>> actions;
+        LuaUtil::LuaState lua{ nullptr, nullptr };
+        std::string error;
+        const auto run = [&](std::string_view script) {
+            lua.protectedCall([&](LuaUtil::LuaView& view) {
+                auto result = view.sol().safe_script(script, sol::script_pass_on_error);
+                if (!result.valid())
+                    error = result.get<sol::error>().what();
+            });
+        };
+        lua.protectedCall([&](LuaUtil::LuaView& view) {
+            view.sol()["records"] = MWLua::initDialogueRecordsBindings(
+                view.sol(), dialogues(), [&](std::function<void()> action) { actions.push_back(std::move(action)); });
+        });
+        run(R"(
+            records.createDialogue({type = 'topic', id = 'the ring', name = 'The Ring'})
+            records.insertInfo('the ring', {id = 'dmo:a:1'}, {at = 'end'})
+        )");
+        ASSERT_TRUE(error.empty()) << error;
+        dialogues().clearDynamic();
+        for (const auto& action : actions)
+            action();
+        actions.clear();
+        EXPECT_EQ(dialogues().search(id("the ring")), nullptr);
+
+        // What was pending belongs to the game before the load: the same calls are taken afresh.
+        run(R"(
+            records.createDialogue({type = 'topic', id = 'the ring', name = 'The Ring'})
+            records.insertInfo('the ring', {id = 'dmo:a:1'}, {at = 'end'})
+        )");
+        ASSERT_TRUE(error.empty()) << error;
+        for (const auto& action : actions)
+            action();
+        const ESM::Dialogue* ring = dialogues().search(id("the ring"));
+        ASSERT_NE(ring, nullptr);
+        EXPECT_EQ(ids(*ring), (std::vector<std::string>{ "dmo:a:1" }));
     }
 }

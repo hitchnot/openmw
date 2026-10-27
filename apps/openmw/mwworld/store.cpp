@@ -1047,6 +1047,7 @@ namespace MWWorld
 
     void Store<ESM::Dialogue>::clearDynamic()
     {
+        ++mEpoch;
         if (mOverlay.countSavedGameRecords() == 0)
             return;
         mOverlay.restore(mStatic);

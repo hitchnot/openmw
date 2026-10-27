@@ -513,6 +513,8 @@ namespace MWWorld
         MWDialogue::DialogueOverlay mOverlay;
         /// Moves whenever the set of dialogues changes, so views that index it rebuild.
         std::uint64_t mGeneration = 0;
+        /// Moves on every clearDynamic, so mutations queued before a load or a new game are dropped.
+        std::uint64_t mEpoch = 0;
 
         void refreshShared();
 
@@ -530,6 +532,7 @@ namespace MWWorld
 
         const MWDialogue::DialogueOverlay& getOverlay() const { return mOverlay; }
         std::uint64_t getGeneration() const { return mGeneration; }
+        std::uint64_t getEpoch() const { return mEpoch; }
         std::size_t countOverlayRecords() const { return mOverlay.countSavedGameRecords(); }
         void writeOverlay(ESM::ESMWriter& writer) const { mOverlay.write(mStatic, writer); }
         void readOverlay(ESM::ESMReader& reader, std::uint32_t type);

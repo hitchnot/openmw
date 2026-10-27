@@ -31,8 +31,19 @@ namespace MWLua
         // What this frame's queued calls will create, so a later call in the same frame may name it.
         struct Pending
         {
+            std::uint64_t mEpoch = 0;
             std::unordered_map<ESM::RefId, ESM::Dialogue::Type> mDialogues;
             std::unordered_map<ESM::RefId, std::unordered_set<ESM::RefId>> mInfos;
+
+            // A load or a new game drops what was queued before it, so nothing it named is pending any more.
+            void follow(std::uint64_t epoch)
+            {
+                if (mEpoch == epoch)
+                    return;
+                mEpoch = epoch;
+                mDialogues.clear();
+                mInfos.clear();
+            }
         };
 
         constexpr std::array<std::pair<std::string_view, Condition::Function>, 12> sConditionTypes{ {
@@ -151,6 +162,7 @@ namespace MWLua
             info.mRace = refId(draft, "race");
             info.mClass = refId(draft, "class");
             info.mFaction = refId(draft, "faction");
+            info.mFactionLess = info.mFaction == "FFFF";
             info.mPcFaction = refId(draft, "pcFaction");
             info.mCell = refId(draft, "cell");
             info.mData.mType = type;
@@ -198,6 +210,7 @@ namespace MWLua
         auto pending = std::make_shared<Pending>();
 
         api["createDialogue"] = [&store, queueAction, pending](const sol::table& draft) -> std::string {
+            pending->follow(store.getEpoch());
             const ESM::Dialogue::Type type = dialogueType(required(draft, "type", "draft"));
             const std::string idText = required(draft, "id", "draft");
             const ESM::RefId id = ESM::RefId::stringRefId(idText);
@@ -220,7 +233,9 @@ namespace MWLua
                     throw std::runtime_error("a content file holds dialogue " + id.serializeText());
             }
             pending->mDialogues.emplace(id, type);
-            queueAction([&store, pending, id, name = std::move(name), type] {
+            queueAction([&store, pending, id, name = std::move(name), type, epoch = store.getEpoch()] {
+                if (store.getEpoch() != epoch)
+                    return;
                 pending->mDialogues.erase(id);
                 try
                 {
@@ -236,6 +251,7 @@ namespace MWLua
 
         api["insertInfo"] = [&store, queueAction, pending](std::string_view dialogueId, const sol::table& draft,
                                 const sol::table& anchorTable) -> std::string {
+            pending->follow(store.getEpoch());
             const ESM::RefId dialogue = ESM::RefId::stringRefId(dialogueId);
             const ESM::Dialogue* record = store.search(dialogue);
             const auto queued = pending->mDialogues.find(dialogue);
@@ -244,8 +260,9 @@ namespace MWLua
             const ESM::Dialogue::Type type = queued != pending->mDialogues.end() ? queued->second : record->mType;
             ESM::DialInfo info = infoFrom(draft, type);
             const MWDialogue::InfoAnchor anchor = anchorFrom(anchorTable);
-            if (!MWDialogue::DialogueOverlay::isOwned(info.mId))
-                throw std::runtime_error("a created info's id begins dmo:");
+            if (!MWDialogue::DialogueOverlay::isOwned(info.mId) || info.mId.startsWith("dmo:j:"))
+                throw std::runtime_error(
+                    "a created info's id begins dmo: and not dmo:j:, the custom journal entries' prefix");
             if (queued == pending->mDialogues.end() && !store.getOverlay().takesInfos(dialogue))
                 throw std::runtime_error("infos are inserted into a dialogue DMO created");
             std::unordered_set<ESM::RefId>& queuedInfos = pending->mInfos[dialogue];
@@ -263,7 +280,10 @@ namespace MWLua
                 throw std::runtime_error("the anchor info " + anchor.mInfo.serializeText() + " is not in the dialogue");
             queuedInfos.insert(info.mId);
             std::string result = info.mId.serializeText();
-            queueAction([&store, pending, dialogue, info = std::move(info), anchor]() mutable {
+            queueAction([&store, pending, dialogue, info = std::move(info), anchor,
+                            epoch = store.getEpoch()]() mutable {
+                if (store.getEpoch() != epoch)
+                    return;
                 pending->mInfos[dialogue].erase(info.mId);
                 try
                 {

@@ -59,7 +59,8 @@ namespace MWDialogue
         static constexpr std::uint32_t sFormatVersion = 1;
         static constexpr std::uint8_t sOpCreated = 1;
 
-        /// Ownership is the id's prefix: an info DMO created begins "dmo:".
+        /// Ownership is the id's prefix: an info DMO created begins "dmo:" (but not "dmo:j:", the custom
+        /// journal entries' prefix).
         static bool isOwned(const ESM::RefId& info);
 
         /// The rule a dialogue DMO would create breaks, or an empty string.
@@ -96,8 +97,9 @@ namespace MWDialogue
         std::vector<ESM::RefId> mCreated;
         std::map<ESM::RefId, std::string> mConflicts;
         std::vector<Inserted> mInserted;
+        // Lua may hold pointers into what a restore removes: the records stay owned here for the process's life.
         std::list<ESM::DialInfo> mGraveyard;
-        std::vector<Dialogues::node_type> mDeadDialogues;
+        std::unordered_multimap<ESM::RefId, ESM::Dialogue> mDeadDialogues;
     };
 
     /// FillJournal's walk, over each dialogue's live info list: the order kept from loading is stale once DMO

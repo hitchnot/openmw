@@ -15,6 +15,7 @@ namespace MWDialogue
     namespace
     {
         constexpr std::string_view sOwnedPrefix = "dmo:";
+        constexpr std::string_view sCustomJournalPrefix = "dmo:j:";
         constexpr std::string_view sJournalPrefix = "dmo:q:";
         constexpr std::string_view sGreetingPrefix = "dmo:g:";
 
@@ -53,7 +54,10 @@ namespace MWDialogue
             return InfoAnchor{ Kind::Front, {} };
         if (value == "end")
             return InfoAnchor{ Kind::End, {} };
-        constexpr std::pair<std::string_view, Kind> prefixes[]{ { "after:", Kind::After }, { "before:", Kind::Before } };
+        constexpr std::pair<std::string_view, Kind> prefixes[]{
+            { "after:", Kind::After },
+            { "before:", Kind::Before },
+        };
         for (const auto& [prefix, kind] : prefixes)
         {
             if (value.starts_with(prefix) && value.size() > prefix.size())
@@ -91,8 +95,8 @@ namespace MWDialogue
     std::string DialogueOverlay::checkInfo(
         const ESM::Dialogue& dialogue, const ESM::RefId& info, const InfoAnchor& anchor) const
     {
-        if (!isOwned(info))
-            return "a created info's id begins dmo:";
+        if (!isOwned(info) || info.startsWith(sCustomJournalPrefix))
+            return "a created info's id begins dmo: and not dmo:j:, the custom journal entries' prefix";
         if (!takesInfos(dialogue.mId))
             return "infos are inserted into a dialogue DMO created";
         if (holdsInfo(dialogue, info))
@@ -171,19 +175,21 @@ namespace MWDialogue
         {
             if (!mConflicts.contains(id))
             {
-                // Lua may hold pointers into a created dialogue: its node is kept, not freed.
                 if (auto node = dialogues.extract(id))
-                    mDeadDialogues.push_back(std::move(node));
+                    mDeadDialogues.insert(std::move(node));
                 continue;
             }
             const auto found = dialogues.find(id);
             if (found == dialogues.end())
                 continue;
+            // Insertion is the only operation: retiring the infos DMO inserted leaves the content files' list.
             ESM::Dialogue::InfoContainer& infos = found->second.mInfo;
             for (auto it = infos.begin(); it != infos.end();)
             {
                 const auto next = std::next(it);
-                if (isOwned(it->mId))
+                const bool inserted = std::any_of(mInserted.begin(), mInserted.end(),
+                    [&](const Inserted& entry) { return entry.mDialogue == id && entry.mInfo == it->mId; });
+                if (inserted)
                     mGraveyard.splice(mGraveyard.end(), infos, it);
                 it = next;
             }
