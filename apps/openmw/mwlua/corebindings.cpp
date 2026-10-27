@@ -72,7 +72,10 @@ namespace MWLua
 
     sol::table initCoreApiExtensions(sol::state_view lua)
     {
-        return LuaUtil::makeReadOnly(lua.create_table_with("watch", 1, "ipc", 1, "dialogue", 1, "journal_custom", 1));
+        // Engine hooks outside any versioned extension; an extension's version covers its own events.
+        sol::table events = LuaUtil::makeReadOnly(lua.create_table_with(1, "onDropped", 2, "onPlaced"));
+        return LuaUtil::makeReadOnly(
+            lua.create_table_with("watch", 1, "ipc", 1, "dialogue", 1, "journal_custom", 1, "events", events));
     }
 
     sol::table initCorePackage(const Context& context)

@@ -13,6 +13,7 @@
 ---
 -- Read-only table of optional engine extensions and their versions.
 -- This build provides `watch = 1`, `ipc = 1`, `dialogue = 1`, and `journal_custom = 1`; absent keys indicate unavailable extensions.
+-- `events` lists the engine handlers this build fires outside any versioned extension: `onDropped` and `onPlaced`. An extension's version covers its own events.
 -- Extensions are versioned here independently of `API_REVISION`, which remains 129.
 -- @field [parent=#core] #table API_EXTENSIONS
 
