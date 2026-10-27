@@ -53,7 +53,7 @@
 -- @return #string The info's id.
 
 ---
--- The dialogues and info entries created since the game was loaded or started, in the order they were created.
+-- Every dialogue and info entry DMO has created in this game, those a loaded save restored included: the dialogues first, then the info entries, each in the order they were created.
 -- @function [parent=#Records] listDeltas
 -- @return #list<#table> `{kind = 'dialogue' | 'info', dialogue = string, info = string?, op = 'created', conflict = string?}`
 
