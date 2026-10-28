@@ -121,7 +121,6 @@ namespace MWGui
         bool canExit = !mTimeAdvancer.isRunning(); // Only exit if not currently waiting
         if (canExit)
         {
-            endRest(true);
             clear();
             stopWaiting();
         }
@@ -232,10 +231,6 @@ namespace MWGui
         }
 
         mProgressBar.setProgress(0, hoursToWait);
-
-        mResting = true;
-        mHoursRested = 0;
-        MWBase::Environment::get().getLuaManager()->onRestStarted(hoursToWait);
     }
 
     void WaitDialog::onCancelButtonClicked(MyGUI::Widget* /*sender*/)
@@ -337,6 +332,10 @@ namespace MWGui
         if (mFadeTimeRemaining <= 0)
         {
             mProgressBar.setVisible(true);
+            // The rest starts with the time advancer, after the fade; the dialog can be reopened before it.
+            mResting = true;
+            mHoursRested = 0;
+            MWBase::Environment::get().getLuaManager()->onRestStarted(mHours);
             mTimeAdvancer.run(mHours, mInterruptAt);
         }
     }
