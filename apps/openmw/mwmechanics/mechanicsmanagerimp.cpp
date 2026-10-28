@@ -1,6 +1,9 @@
 #include "mechanicsmanagerimp.hpp"
 
 #include <cassert>
+#include <stdexcept>
+#include <string>
+#include <string_view>
 
 #include <osg/Stats>
 
@@ -24,6 +27,7 @@
 
 #include "../mwbase/dialoguemanager.hpp"
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/soundmanager.hpp"
 #include "../mwbase/statemanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -113,6 +117,27 @@ namespace
             victim = MWBase::Environment::get().getWorld()->searchPtr(cellref.getOwner(), true, false);
 
         return isOwned || isFactionOwned;
+    }
+
+    // The CrimeCommitted hook's type names.
+    std::string_view offenseName(MWBase::MechanicsManager::OffenseType type)
+    {
+        switch (type)
+        {
+            case MWBase::MechanicsManager::OT_Theft:
+                return "theft";
+            case MWBase::MechanicsManager::OT_Assault:
+                return "assault";
+            case MWBase::MechanicsManager::OT_Murder:
+                return "murder";
+            case MWBase::MechanicsManager::OT_Trespassing:
+                return "trespassing";
+            case MWBase::MechanicsManager::OT_SleepingInOwnedBed:
+                return "sleeping_in_owned_bed";
+            case MWBase::MechanicsManager::OT_Pickpocket:
+                return "pickpocket";
+        }
+        throw std::logic_error("Unknown offense type " + std::to_string(type));
     }
 }
 
@@ -1153,6 +1178,8 @@ namespace MWMechanics
         if (player != getPlayer())
             return false;
 
+        const int bountyBefore = player.getClass().getNpcStats(player).getBounty();
+
         if (type == OT_Assault)
             victimAware = true;
 
@@ -1195,6 +1222,7 @@ namespace MWMechanics
             }
         }
 
+        bool witnessed = crimeSeen;
         if (crimeSeen)
             reportCrime(player, victim, type, factionId, arg);
         else if (type == OT_Assault && !victim.isEmpty())
@@ -1203,11 +1231,15 @@ namespace MWMechanics
             if (victim.getClass().isClass(victim, "guard")
                 && !victim.getClass().getCreatureStats(victim).getAiSequence().hasPackage(AiPackageTypeId::Pursue))
                 reported = reportCrime(player, victim, type, ESM::RefId(), arg);
+            witnessed = reported;
 
             // TODO: combat should be started with an "unaware" flag, which makes the victim flee?
             if (!reported)
                 startCombat(victim, player, &playerFollowers);
         }
+        const int bounty = player.getClass().getNpcStats(player).getBounty() - bountyBefore;
+        MWBase::Environment::get().getLuaManager()->onCrimeCommitted(
+            victim, offenseName(type), factionId, witnessed, std::max(0, bounty));
         return crimeSeen;
     }
 

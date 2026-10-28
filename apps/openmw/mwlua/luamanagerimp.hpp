@@ -2,6 +2,7 @@
 #define MWLUA_LUAMANAGERIMP_H
 
 #include <filesystem>
+#include <functional>
 #include <map>
 #include <set>
 
@@ -18,6 +19,7 @@
 #include "../mwbase/windowmanager.hpp"
 
 #include "engineevents.hpp"
+#include "enginehooks.hpp"
 #include "globalscripts.hpp"
 #include "ipcbindings.hpp"
 #include "loadscripts.hpp"
@@ -121,6 +123,12 @@ namespace MWLua
         void actorDied(const MWWorld::Ptr& actor) override;
         void onDialogueResponse(
             const MWWorld::Ptr& actor, const ESM::DialInfo& info, const ESM::Dialogue& record) override;
+        void onCrimeCommitted(const MWWorld::Ptr& victim, std::string_view type, const ESM::RefId& faction,
+            bool witnessed, int bounty) override;
+        void onRestStarted(int hours) override;
+        void onRestEnded(int hours, bool interrupted) override;
+        void onTravelTaken(
+            const ESM::RefId& service, const ESM::RefId& fromCell, const ESM::RefId& toCell, int price) override;
 
         MWBase::LuaManager::ActorControls* getActorControls(const MWWorld::Ptr&) const override;
 
@@ -201,6 +209,7 @@ namespace MWLua
             std::optional<LuaUtil::ScriptIdsWithInitializationData> autoStartConf = std::nullopt);
         void reloadAllScriptsImpl();
         void synchronizedUpdateUnsafe();
+        void notifyEngineEvent(const std::string& name, const std::function<void(sol::table&)>& builder);
 
         bool mInitialized = false;
         bool mGlobalScriptsStarted = false;
@@ -225,6 +234,7 @@ namespace MWLua
         IpcManager mIpc;
 
         MWWorld::Ptr mPlayer;
+        EngineHookGate mHooks;
 
         LuaEvents mLuaEvents{ mGlobalScripts, mMenuScripts };
         EngineEvents mEngineEvents{ mGlobalScripts };

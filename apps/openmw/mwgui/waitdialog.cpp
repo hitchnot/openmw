@@ -12,6 +12,7 @@
 #include <components/widgets/box.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/statemanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -120,6 +121,7 @@ namespace MWGui
         bool canExit = !mTimeAdvancer.isRunning(); // Only exit if not currently waiting
         if (canExit)
         {
+            endRest(true);
             clear();
             stopWaiting();
         }
@@ -133,6 +135,7 @@ namespace MWGui
         mManualHours = 1;
         mFadeTimeRemaining = 0;
         mInterruptAt = -1;
+        mResting = false;
         mTimeAdvancer.stop();
     }
 
@@ -229,6 +232,10 @@ namespace MWGui
         }
 
         mProgressBar.setProgress(0, hoursToWait);
+
+        mResting = true;
+        mHoursRested = 0;
+        MWBase::Environment::get().getLuaManager()->onRestStarted(hoursToWait);
     }
 
     void WaitDialog::onCancelButtonClicked(MyGUI::Widget* /*sender*/)
@@ -260,21 +267,27 @@ namespace MWGui
         mProgressBar.setProgress(cur, total);
         MWBase::Environment::get().getMechanicsManager()->rest(1, mSleeping);
         MWBase::Environment::get().getWorld()->advanceTime(1);
+        ++mHoursRested;
 
         MWWorld::Ptr player = MWBase::Environment::get().getWorld()->getPlayerPtr();
         if (player.getClass().getCreatureStats(player).isDead())
+        {
+            endRest(true);
             stopWaiting();
+        }
     }
 
     void WaitDialog::onWaitingInterrupted()
     {
         MWBase::Environment::get().getWindowManager()->messageBox("#{sSleepInterrupt}");
         MWBase::Environment::get().getWorld()->spawnRandomCreature(mInterruptCreatureList);
+        endRest(true);
         stopWaiting();
     }
 
     void WaitDialog::onWaitingFinished()
     {
+        endRest(false);
         stopWaiting();
 
         MWWorld::Ptr player = MWMechanics::getPlayer();
@@ -390,7 +403,18 @@ namespace MWGui
         if (mInterruptAt != -1)
             onWaitingInterrupted();
         else
+        {
+            endRest(true);
             stopWaiting();
+        }
+    }
+
+    void WaitDialog::endRest(bool interrupted)
+    {
+        if (!mResting)
+            return;
+        mResting = false;
+        MWBase::Environment::get().getLuaManager()->onRestEnded(mHoursRested, interrupted);
     }
 
 }

@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <map>
 #include <string>
+#include <string_view>
 #include <variant>
 
 #include <SDL_events.h>
@@ -101,6 +102,15 @@ namespace MWBase
         virtual void actorDied(const MWWorld::Ptr& actor) = 0;
         virtual void onDialogueResponse(
             const MWWorld::Ptr& actor, const ESM::DialInfo& info, const ESM::Dialogue& record)
+            = 0;
+        // Engine hooks delivered to the player script, at most 64 a frame.
+        virtual void onCrimeCommitted(const MWWorld::Ptr& victim, std::string_view type, const ESM::RefId& faction,
+            bool witnessed, int bounty)
+            = 0;
+        virtual void onRestStarted(int hours) = 0;
+        virtual void onRestEnded(int hours, bool interrupted) = 0;
+        virtual void onTravelTaken(
+            const ESM::RefId& service, const ESM::RefId& fromCell, const ESM::RefId& toCell, int price)
             = 0;
         virtual void questUpdated(const ESM::RefId& questId, int stage) = 0;
         virtual void onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId) = 0;

@@ -7,10 +7,12 @@
 #include <components/debug/debuglog.hpp>
 #include <components/esm3/loadcrea.hpp>
 #include <components/esm3/loadgmst.hpp>
+#include <components/esm3/loadnpc.hpp>
 #include <components/misc/strings/conversion.hpp>
 #include <components/settings/values.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
@@ -20,6 +22,7 @@
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwworld/livecellref.hpp"
 #include "../mwworld/store.hpp"
 #include "../mwworld/worldmodel.hpp"
 
@@ -197,6 +200,10 @@ namespace MWGui
         npcStats.setGoldPool(npcStats.getGoldPool() + price);
 
         MWBase::Environment::get().getWindowManager()->fadeScreenOut(1);
+        const ESM::RefId fromCell = player.getCell()->getCell()->getId();
+        // The service is the provider's class for an NPC, else its record; read before the teleport unloads it.
+        const ESM::RefId service
+            = mPtr.getClass().isNpc() ? mPtr.get<ESM::NPC>()->mBase->mClass : mPtr.getCellRef().getRefId();
         ESM::Position pos = *sender->getUserData<ESM::Position>();
         std::string_view cellname = sender->getUserString("Destination");
         bool interior = sender->getUserString("interior") == "y";
@@ -224,6 +231,8 @@ namespace MWGui
         // Teleports any followers, too.
         MWWorld::ActionTeleport action(cellId, pos, true);
         action.execute(player);
+
+        MWBase::Environment::get().getLuaManager()->onTravelTaken(service, fromCell, cellId, price);
 
         MWBase::Environment::get().getWindowManager()->fadeScreenOut(0);
         MWBase::Environment::get().getWindowManager()->fadeScreenIn(1);

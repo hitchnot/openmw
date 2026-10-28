@@ -321,6 +321,7 @@ namespace MWLua
 
     void LuaManager::synchronizedUpdateUnsafe()
     {
+        mHooks.newFrame();
         if (mNewGameStarted)
         {
             mNewGameStarted = false;
@@ -517,6 +518,58 @@ namespace MWLua
             data["infoId"] = info.mId.serializeText();
             data["recordId"] = record.mId.serializeText();
             sendLocalEvent(mPlayer, "DialogueResponse", data);
+        });
+    }
+
+    void LuaManager::notifyEngineEvent(const std::string& name, const std::function<void(sol::table&)>& builder)
+    {
+        if (mPlayer.isEmpty() || !mHooks.admit())
+            return;
+        mLua.protectedCall([&](LuaUtil::LuaView& view) {
+            sol::table data = view.newTable();
+            builder(data);
+            sendLocalEvent(mPlayer, name, data);
+        });
+    }
+
+    void LuaManager::onCrimeCommitted(
+        const MWWorld::Ptr& victim, std::string_view type, const ESM::RefId& faction, bool witnessed, int bounty)
+    {
+        notifyEngineEvent("CrimeCommitted", [&](sol::table& data) {
+            data["type"] = std::string(type);
+            if (!victim.isEmpty())
+                data["victim"] = LObject(victim);
+            if (!faction.empty())
+                data["faction"] = faction.serializeText();
+            data["witnessed"] = witnessed;
+            data["bounty"] = bounty;
+        });
+    }
+
+    void LuaManager::onRestStarted(int hours)
+    {
+        notifyEngineEvent("RestStarted", [&](sol::table& data) {
+            data["hours"] = hours;
+            data["interrupted"] = false;
+        });
+    }
+
+    void LuaManager::onRestEnded(int hours, bool interrupted)
+    {
+        notifyEngineEvent("RestEnded", [&](sol::table& data) {
+            data["hours"] = hours;
+            data["interrupted"] = interrupted;
+        });
+    }
+
+    void LuaManager::onTravelTaken(
+        const ESM::RefId& service, const ESM::RefId& fromCell, const ESM::RefId& toCell, int price)
+    {
+        notifyEngineEvent("TravelTaken", [&](sol::table& data) {
+            data["service"] = service.serializeText();
+            data["fromCell"] = fromCell.serializeText();
+            data["toCell"] = toCell.serializeText();
+            data["price"] = price;
         });
     }
 

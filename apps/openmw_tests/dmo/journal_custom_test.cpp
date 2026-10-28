@@ -589,7 +589,7 @@ namespace
         ASSERT_TRUE(error.empty()) << error;
     }
 
-    TEST(dmoApiExtensions, EventsNameTheBackportedHooksAndAreReadOnly)
+    TEST(dmoApiExtensions, EventsNameTheBackportedHandlersAndTheEngineHooksAndAreReadOnly)
     {
         LuaUtil::LuaState lua{ nullptr, nullptr };
         std::string error;
@@ -600,9 +600,13 @@ namespace
                 for _, name in ipairs(extensions.events) do
                     names[#names + 1] = name
                 end
-                assert(#names == 2 and names[1] == "onDropped" and names[2] == "onPlaced")
-                assert(#extensions.events == 2)
-                assert(not pcall(function() extensions.events[3] = "onActivate" end))
+                local expected = { "onDropped", "onPlaced", "CrimeCommitted", "RestStarted", "RestEnded", "TravelTaken" }
+                assert(#names == #expected, #names)
+                for i, name in ipairs(expected) do
+                    assert(names[i] == name, names[i])
+                end
+                assert(#extensions.events == #expected)
+                assert(not pcall(function() extensions.events[7] = "onActivate" end))
                 assert(not pcall(function() extensions.events = {} end))
             )", sol::script_pass_on_error);
             if (!result.valid())

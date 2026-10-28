@@ -13,6 +13,7 @@ file(GLOB UNITTEST_SRC_FILES
     dmo/journal_custom_test.cpp
     dmo/dialogue_overlay_test.cpp
     dmo/lua_timer_test.cpp
+    dmo/engine_hooks_test.cpp
 
     mwworld/teststore.cpp
     mwworld/testduration.cpp

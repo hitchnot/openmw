@@ -66,6 +66,10 @@ namespace MWGui
         int mInterruptAt;
         ESM::RefId mInterruptCreatureList;
 
+        // A rest the RestStarted hook announced, until RestEnded.
+        bool mResting = false;
+        int mHoursRested = 0;
+
         WaitDialogProgressBar mProgressBar;
 
         void onUntilHealedButtonClicked(MyGUI::Widget* sender);
@@ -82,6 +86,7 @@ namespace MWGui
 
         void startWaiting(int hoursToWait);
         void stopWaiting();
+        void endRest(bool interrupted);
     };
 
 }

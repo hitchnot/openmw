@@ -13,7 +13,12 @@
 ---
 -- Read-only table of optional engine extensions and their versions.
 -- This build provides `watch = 1`, `ipc = 1`, `dialogue = 1`, `journal_custom = 1` and `records = 1` (@{openmw.world#world.records}); absent keys indicate unavailable extensions.
--- `events` lists the engine handlers this build fires outside any versioned extension: `onDropped` and `onPlaced`. An extension's version covers its own events.
+-- `events` lists the engine handlers and events this build fires outside any versioned extension: the handlers `onDropped` and `onPlaced`, and the events `CrimeCommitted`, `RestStarted`, `RestEnded` and `TravelTaken`, sent to the player's local scripts, at most 64 a frame. An extension's version covers its own events.
+--
+--   * `CrimeCommitted`: `{type, victim?, faction?, witnessed, bounty}`. `type` is `theft`, `assault`, `murder`, `trespassing`, `sleeping_in_owned_bed` or `pickpocket`; `victim` is a GameObject; `faction` a faction id; `witnessed` whether anyone saw it; `bounty` what it added to the player's bounty.
+--   * `RestStarted`: `{hours, interrupted = false}`, the hours asked for, when a rest or wait begins.
+--   * `RestEnded`: `{hours, interrupted}`, the hours that passed, when it ends; `interrupted` when it ended early.
+--   * `TravelTaken`: `{service, fromCell, toCell, price}` after a paid travel service. `service` is the provider's class id for an NPC, else its record id; the cells are ids as `cell.id` gives them.
 -- Extensions are versioned here independently of `API_REVISION`, which remains 129.
 -- @field [parent=#core] #table API_EXTENSIONS
 
