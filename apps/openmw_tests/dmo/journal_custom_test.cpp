@@ -580,7 +580,7 @@ namespace
             view.sol()["extensions"] = MWLua::initCoreApiExtensions(view.sol());
             auto result = view.sol().safe_script(R"(
                 assert(extensions.journal_custom == 1)
-                assert(extensions.watch == 1 and extensions.ipc == 1 and extensions.dialogue == 1)
+                assert(extensions.watch == 1 and extensions.ipc == 1 and extensions.dialogue == 2)
                 assert(not pcall(function() extensions.journal_custom = 2 end))
             )", sol::script_pass_on_error);
             if (!result.valid())

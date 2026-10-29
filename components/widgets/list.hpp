@@ -36,7 +36,9 @@ namespace Gui
         void adjustSize();
 
         void sort();
-        void addItem(std::string_view name, int verticalPadding = 0);
+        // Name identifies the widget; an optional caption and skin only affect its presentation.
+        void addItem(
+            std::string_view name, int verticalPadding = 0, std::string_view skin = {}, std::string_view caption = {});
         void addSeparator(); ///< add a seperator between the current and the next item.
         void removeItem(const std::string& name);
         size_t getItemCount();
@@ -68,10 +70,14 @@ namespace Gui
         struct ListItemData
         {
             std::string mName;
+            std::string mSkin;
+            std::string mCaption;
             int mVPadding;
 
-            ListItemData(std::string_view name, int verticalPadding)
+            ListItemData(std::string_view name, int verticalPadding, std::string_view skin, std::string_view caption)
                 : mName(name)
+                , mSkin(skin)
+                , mCaption(caption.empty() ? name : caption)
                 , mVPadding(verticalPadding)
             {
             }

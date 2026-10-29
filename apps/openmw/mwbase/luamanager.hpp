@@ -124,7 +124,8 @@ namespace MWBase
             std::string_view service, const MWWorld::Ptr& actor, const ServiceDetail& detail = {})
             = 0;
         virtual void questUpdated(const ESM::RefId& questId, int stage) = 0;
-        virtual void onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId) = 0;
+        virtual void onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId, bool pseudo = false)
+            = 0;
         virtual void onDialogueChoiceSelected(const MWWorld::Ptr& actor, const std::string& offerId,
             const std::string& choiceId, bool lua) = 0;
         // `arg` is either forwarded from MWGui::pushGuiMode or empty

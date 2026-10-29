@@ -57,7 +57,7 @@ namespace MWLua
             local received = require('test.observer').received
             local handlers = {}
             for _, name in ipairs({'LockPicked', 'LockFailed', 'SpellCast', 'LevelUp', 'RestStarted',
-                                  'BarterCompleted', 'ServiceUsed'}) do
+                                  'BarterCompleted', 'ServiceUsed', 'DialogueTopicSelected'}) do
                 handlers[name] = function(data)
                     received[#received + 1] = {name = name, data = data}
                 end
@@ -162,6 +162,22 @@ namespace MWLua
     };
 
     using dmoEngineHookEvents = EngineHooksTest;
+
+    TEST_F(dmoEngineHookEvents, DialogueTopicSelectionReportsActorIdAndPseudoFlag)
+    {
+        start();
+        mManager->onDialogueTopicSelected(mActor, "Door", true);
+        mManager->onDialogueTopicSelected(mActor, "Background");
+        deliver();
+        check(R"(
+            assert(#received == 2)
+            assert(received[1].name == 'DialogueTopicSelected')
+            assert(received[1].data.actor == actor and received[1].data.topic == 'door')
+            assert(received[1].data.pseudo == true)
+            assert(received[2].data.actor == actor and received[2].data.topic == 'background')
+            assert(received[2].data.pseudo == false)
+        )");
+    }
 
     TEST_F(dmoEngineHookEvents, LockPickedReportsAttemptedObject)
     {

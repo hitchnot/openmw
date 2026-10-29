@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -13,6 +14,8 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwdialogue/dialoguechoices.hpp"
+#include "../mwdialogue/dialoguepseudotopics.hpp"
+#include "../mwworld/class.hpp"
 #include "context.hpp"
 #include "luamanagerimp.hpp"
 #include "object.hpp"
@@ -36,6 +39,62 @@ namespace MWLua
                 "Update dialogue");
             return true;
         }
+    }
+
+    void addDialogueTopicBindings(sol::table api, MWBase::DialogueManager& dialogue,
+        std::function<void(std::function<void()>)> queue, DialogueTopicWindow window)
+    {
+        const auto queueTopicAction = [&dialogue, queue, window](std::function<void()> action) {
+            if (window.mActor().isEmpty())
+                return false;
+            const auto session = dialogue.dialogueSession();
+            queue([&dialogue, window, session, action = std::move(action)] {
+                if (!window.mActor().isEmpty() && dialogue.dialogueSession() == session)
+                    action();
+            });
+            return true;
+        };
+        api["selectTopic"] = [queueTopicAction, window](std::string topicId) {
+            if (!window.mCanSelect(topicId))
+                return false;
+            return queueTopicAction([window, topicId = std::move(topicId)] { window.mSelect(topicId); });
+        };
+        api["refresh"] = [queueTopicAction, window] { return queueTopicAction(window.mRefresh); };
+        api["addPseudoTopic"] = [&dialogue, queue, window](const LObject& actor, std::string topicId, std::string label,
+                                    sol::optional<sol::table> options) {
+            if (!actor.ptr().getClass().isActor())
+                throw std::runtime_error("Pseudo-topics require an actor");
+            if (topicId.empty() || label.empty())
+                throw std::runtime_error("Pseudo-topic id and label must not be empty");
+            MWDialogue::PseudoTopic topic{ std::move(topicId), std::move(label),
+                options ? options->get_or<std::string>("skin", "") : "" };
+            const auto epoch = dialogue.pseudoTopicEpoch();
+            queue([&dialogue, window, actor, epoch, topic = std::move(topic)] {
+                if (dialogue.pseudoTopicEpoch() != epoch)
+                    return;
+                const auto& ptr = actor.ptrOrEmpty();
+                if (ptr.isEmpty())
+                    return;
+                dialogue.addPseudoTopic(ptr, topic);
+                if (window.mActor() == ptr)
+                    window.mRefresh();
+            });
+        };
+        api["removePseudoTopic"] = [&dialogue, queue, window](const LObject& actor, std::string topicId) {
+            if (!actor.ptr().getClass().isActor())
+                throw std::runtime_error("Pseudo-topics require an actor");
+            const auto epoch = dialogue.pseudoTopicEpoch();
+            queue([&dialogue, window, actor, epoch, topicId = std::move(topicId)] {
+                if (dialogue.pseudoTopicEpoch() != epoch)
+                    return;
+                const auto& ptr = actor.ptrOrEmpty();
+                if (ptr.isEmpty())
+                    return;
+                dialogue.removePseudoTopic(ptr, topicId);
+                if (window.mActor() == ptr)
+                    window.mRefresh();
+            });
+        };
     }
 
     sol::table initDialogueUiPackage(const Context& context)
@@ -87,25 +146,26 @@ namespace MWLua
                 id = *offerId;
             return queueDialogueAction(luaManager, [dialogue, id = std::move(id)] { dialogue->clearLuaChoices(id); });
         };
-        api["selectTopic"] = [luaManager, windows](std::string topicId) {
-            if (!windows->canSelectDialogueTopic(topicId))
-                return false;
-            return queueDialogueAction(luaManager,
-                [windows, topicId = std::move(topicId)] { windows->selectDialogueTopic(topicId); });
-        };
+        addDialogueTopicBindings(api, *dialogue,
+            [luaManager](
+                std::function<void()> action) { luaManager->addAction(std::move(action), "Update dialogue topics"); },
+            { [windows] { return windows->getDialogueActor(); },
+                [windows](std::string_view topic) { return windows->canSelectDialogueTopic(topic); },
+                [windows](const std::string& topic) { windows->selectDialogueTopic(topic); },
+                [windows] { windows->refreshDialogue(); } });
         api["close"] = [luaManager, windows] {
             return queueDialogueAction(luaManager, [windows] { windows->closeDialogue(); });
         };
         return LuaUtil::makeReadOnly(api);
     }
 
-    void LuaManager::onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId)
+    void LuaManager::onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId, bool pseudo)
     {
         mLua.protectedCall([&](LuaUtil::LuaView& view) {
             sol::table data = view.newTable();
             data["actor"] = LObject(actor);
             data["topic"] = Misc::StringUtils::lowerCase(topicId);
-            data["pseudo"] = false;
+            data["pseudo"] = pseudo;
             sendLocalEvent(mPlayer, "DialogueTopicSelected", data);
         });
     }

@@ -138,6 +138,7 @@ namespace MWBase
         virtual bool canSelectDialogueTopic(std::string_view topicId) const = 0;
         virtual void selectDialogueTopic(const std::string& topicId) = 0;
         virtual void closeDialogue() = 0;
+        virtual void refreshDialogue() = 0;
 
         virtual bool isGuiMode() const = 0;
 

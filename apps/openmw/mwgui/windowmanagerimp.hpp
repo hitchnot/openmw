@@ -164,6 +164,7 @@ namespace MWGui
         bool canSelectDialogueTopic(std::string_view topicId) const override;
         void selectDialogueTopic(const std::string& topicId) override;
         void closeDialogue() override;
+        void refreshDialogue() override;
 
         bool isGuiMode() const override;
 

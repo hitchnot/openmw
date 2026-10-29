@@ -48,7 +48,7 @@ add_openmw_dir (mwgui
     )
 
 add_openmw_dir (mwdialogue
-    dialoguemanagerimp dialoguechoices dialogueoverlay journalimp journalentry journalcustom quest topic filter selectwrapper keywordsearch scripttest
+    dialoguemanagerimp dialoguechoices dialoguepseudotopics dialogueoverlay journalimp journalentry journalcustom quest topic filter selectwrapper keywordsearch scripttest
     )
 
 add_openmw_dir (mwscript

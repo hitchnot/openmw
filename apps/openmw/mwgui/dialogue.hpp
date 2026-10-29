@@ -9,6 +9,7 @@
 #include "bookpage.hpp"
 
 #include "../mwbase/dialoguemanager.hpp"
+#include "../mwdialogue/dialoguepseudotopics.hpp"
 #include "../mwdialogue/keywordsearch.hpp"
 
 #include <MyGUI_Delegate.h>
@@ -178,6 +179,7 @@ namespace MWGui
         void onMouseWheel(MyGUI::Widget* sender, int rel);
         void onWindowResize(MyGUI::Window* sender);
         void onTopicActivated(const std::string& topicId);
+        void onPseudoTopicActivated(const std::string& topicId);
         void onChoiceActivated(int id);
         void onGoodbyeActivated();
 
@@ -197,6 +199,8 @@ namespace MWGui
 
         bool mIsCompanion;
         std::list<std::string> mKeywords;
+        std::vector<MWDialogue::PseudoTopic> mPseudoTopics;
+        std::size_t mPseudoTopicsStart = 0;
 
         std::vector<std::unique_ptr<DialogueText>> mHistoryContents;
         std::vector<std::pair<std::string, int>> mChoices;

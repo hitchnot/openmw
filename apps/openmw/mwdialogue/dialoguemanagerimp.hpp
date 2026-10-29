@@ -18,6 +18,7 @@
 #include "../mwworld/ptr.hpp"
 
 #include "dialoguechoices.hpp"
+#include "dialoguepseudotopics.hpp"
 #include "keywordsearch.hpp"
 
 namespace ESM
@@ -68,6 +69,9 @@ namespace MWDialogue
         std::map<int, LuaChoiceEntry> mLuaChoices;
         int mNextLuaChoice = sLuaChoiceBegin;
         std::uint64_t mDialogueSession = 0;
+        // Actor-instance entries survive conversations, but never a load or new game.
+        std::map<ESM::RefNum, std::vector<PseudoTopic>> mPseudoTopics;
+        std::uint64_t mPseudoTopicEpoch = 0;
 
         int mOriginalDisposition;
         int mCurrentDisposition;
@@ -90,6 +94,7 @@ namespace MWDialogue
     protected:
         virtual void answerVanilla(int answer, ResponseCallback* callback);
         virtual void emitChoiceSelected(const ChoiceSelection& selection);
+        virtual void emitPseudoTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId);
 
     public:
         DialogueManager(const Compiler::Extensions& extensions, Translation::Storage& translationDataStorage);
@@ -115,6 +120,11 @@ namespace MWDialogue
         void clearLuaChoices(const std::optional<std::string>& offerId = std::nullopt) override;
         std::uint64_t dialogueSession() const override { return mDialogueSession; }
         void addTopicsFromText(const std::string& text) override;
+        void addPseudoTopic(const MWWorld::Ptr& actor, const PseudoTopic& topic) override;
+        void removePseudoTopic(const MWWorld::Ptr& actor, std::string_view topicId) override;
+        const std::vector<PseudoTopic>& getPseudoTopics(const MWWorld::Ptr& actor) const override;
+        bool selectPseudoTopic(const MWWorld::Ptr& actor, std::string_view topicId) override;
+        std::uint64_t pseudoTopicEpoch() const override { return mPseudoTopicEpoch; }
 
         bool isGoodbye() const override;
 

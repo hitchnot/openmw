@@ -10,6 +10,7 @@ file(GLOB UNITTEST_SRC_FILES
     dmo/ipc_queue_test.cpp
     dmo/ipc_socket_test.cpp
     dmo/dialogue_choice_range_test.cpp
+    dmo/dialogue_pseudo_topics_test.cpp
     dmo/journal_custom_test.cpp
     dmo/dialogue_overlay_test.cpp
     dmo/lua_timer_test.cpp

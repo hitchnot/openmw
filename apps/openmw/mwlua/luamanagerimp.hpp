@@ -116,7 +116,8 @@ namespace MWLua
         }
         void objectTeleported(const MWWorld::Ptr& ptr) override;
         void questUpdated(const ESM::RefId& questId, int stage) override;
-        void onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId) override;
+        void onDialogueTopicSelected(
+            const MWWorld::Ptr& actor, const std::string& topicId, bool pseudo = false) override;
         void onDialogueChoiceSelected(const MWWorld::Ptr& actor, const std::string& offerId,
             const std::string& choiceId, bool lua) override;
         void uiModeChanged(const MWWorld::Ptr& arg) override;

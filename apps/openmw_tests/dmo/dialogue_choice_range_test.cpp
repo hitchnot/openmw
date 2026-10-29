@@ -210,7 +210,7 @@ namespace
         lua.protectedCall([&](LuaUtil::LuaView& view) {
             view.sol()["extensions"] = MWLua::initCoreApiExtensions(view.sol());
             auto result = view.sol().safe_script(R"(
-                assert(extensions.dialogue == 1 and extensions.watch == 1 and extensions.ipc == 1)
+                assert(extensions.dialogue == 2 and extensions.watch == 1 and extensions.ipc == 1)
                 assert(not pcall(function() extensions.dialogue = 2 end))
                 assert(not pcall(function() extensions.other = 1 end))
             )", sol::script_pass_on_error);

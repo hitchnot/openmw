@@ -12,7 +12,8 @@
 
 ---
 -- Read-only table of optional engine extensions and their versions.
--- This build provides `watch = 1`, `ipc = 1`, `dialogue = 1`, `journal_custom = 1` and `records = 1` (@{openmw.world#world.records}); absent keys indicate unavailable extensions.
+-- This build provides `watch = 1`, `ipc = 1`, `dialogue = 2`, `journal_custom = 1` and `records = 1` (@{openmw.world#world.records}); absent keys indicate unavailable extensions.
+-- Dialogue version 2 adds actor-specific transient pseudo-topics and topic refresh.
 -- `events` lists the engine handlers and events this build fires outside any versioned extension: the handlers `onDropped` and `onPlaced`, and the events `CrimeCommitted`, `RestStarted`, `RestEnded`, `TravelTaken`, `LockPicked`, `LockFailed`, `SpellCast`, `LevelUp`, `BarterCompleted` and `ServiceUsed`, sent to the player's local scripts, sharing a limit of 64 events a frame. Excess events are counted and dropped without suppressing game behaviour. An extension's version covers its own events.
 --
 --   * `CrimeCommitted`: `{type, victim?, faction?, witnessed, bounty}`. `type` is `theft`, `assault`, `murder`, `trespassing`, `sleeping_in_owned_bed` or `pickpocket`; `victim` is a GameObject; `faction` a faction id; `witnessed` whether anyone saw it; `bounty` what it added to the player's bounty.

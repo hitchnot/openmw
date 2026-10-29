@@ -13,6 +13,7 @@
 namespace MWDialogue
 {
     struct LuaChoice;
+    struct PseudoTopic;
 }
 
 namespace Loading
@@ -75,6 +76,12 @@ namespace MWBase
         virtual void clearLuaChoices(const std::optional<std::string>& offerId = std::nullopt) = 0;
         virtual std::uint64_t dialogueSession() const = 0;
         virtual void addTopicsFromText(const std::string& text) = 0;
+
+        virtual void addPseudoTopic(const MWWorld::Ptr& actor, const MWDialogue::PseudoTopic& topic) = 0;
+        virtual void removePseudoTopic(const MWWorld::Ptr& actor, std::string_view topicId) = 0;
+        virtual const std::vector<MWDialogue::PseudoTopic>& getPseudoTopics(const MWWorld::Ptr& actor) const = 0;
+        virtual bool selectPseudoTopic(const MWWorld::Ptr& actor, std::string_view topicId) = 0;
+        virtual std::uint64_t pseudoTopicEpoch() const = 0;
 
         virtual bool isGoodbye() const = 0;
 

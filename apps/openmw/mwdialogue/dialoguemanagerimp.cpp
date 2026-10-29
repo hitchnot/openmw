@@ -72,6 +72,8 @@ namespace MWDialogue
 
     void DialogueManager::clear()
     {
+        mPseudoTopics.clear();
+        ++mPseudoTopicEpoch;
         clearLuaChoices();
         ++mDialogueSession;
         mKnownTopics.clear();

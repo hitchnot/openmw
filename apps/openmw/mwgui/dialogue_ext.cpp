@@ -14,13 +14,29 @@ namespace MWGui
         if (mPtr.isEmpty() || mGoodbye || MWBase::Environment::get().getDialogueManager()->isInChoice())
             return false;
         return std::any_of(mKeywords.begin(), mKeywords.end(),
-            [&](const std::string& keyword) { return Misc::StringUtils::ciEqual(keyword, topicId); });
+                   [&](const std::string& keyword) { return Misc::StringUtils::ciEqual(keyword, topicId); })
+            || std::any_of(mPseudoTopics.begin(), mPseudoTopics.end(),
+                [&](const auto& topic) { return Misc::StringUtils::ciEqual(topic.mId, topicId); });
     }
 
     void DialogueWindow::selectTopic(const std::string& topicId)
     {
         if (canSelectTopic(topicId))
-            onTopicActivated(topicId);
+        {
+            // Ordinary topics keep their response path even if a pseudo-topic uses the same id.
+            if (std::any_of(mKeywords.begin(), mKeywords.end(),
+                    [&](const auto& keyword) { return Misc::StringUtils::ciEqual(keyword, topicId); }))
+                onTopicActivated(topicId);
+            else
+                onPseudoTopicActivated(topicId);
+        }
+    }
+
+    void DialogueWindow::onPseudoTopicActivated(const std::string& topicId)
+    {
+        if (!mPtr.isEmpty() && !mGoodbye
+            && MWBase::Environment::get().getDialogueManager()->selectPseudoTopic(mPtr, topicId))
+            updateTopics();
     }
 
     void DialogueWindow::closeDialogue()
@@ -62,5 +78,11 @@ namespace MWGui
     {
         if (!getDialogueActor().isEmpty())
             mDialogueWindow->closeDialogue();
+    }
+
+    void WindowManager::refreshDialogue()
+    {
+        if (!getDialogueActor().isEmpty())
+            mDialogueWindow->updateTopics();
     }
 }

@@ -29,9 +29,9 @@ namespace Gui
                 MyGUI::Align::Top | MyGUI::Align::Left | MyGUI::Align::Stretch, getName() + "_ScrollView");
     }
 
-    void MWList::addItem(std::string_view name, int verticalPadding)
+    void MWList::addItem(std::string_view name, int verticalPadding, std::string_view skin, std::string_view caption)
     {
-        mItems.emplace_back(name, verticalPadding);
+        mItems.emplace_back(name, verticalPadding, skin, caption);
     }
 
     void MWList::addSeparator()
@@ -64,10 +64,11 @@ namespace Gui
             {
                 if (mListItemSkin.empty())
                     return;
-                MyGUI::Button* button = mScrollView->createWidget<MyGUI::Button>(mListItemSkin,
-                    MyGUI::IntCoord(0, mItemHeight, mScrollView->getSize().width - scrollBarWidth - 2, 24),
-                    MyGUI::Align::Left | MyGUI::Align::Top, getName() + "_item_" + item.mName);
-                button->setCaption(item.mName);
+                MyGUI::Button* button
+                    = mScrollView->createWidget<MyGUI::Button>(item.mSkin.empty() ? mListItemSkin : item.mSkin,
+                        MyGUI::IntCoord(0, mItemHeight, mScrollView->getSize().width - scrollBarWidth - 2, 24),
+                        MyGUI::Align::Left | MyGUI::Align::Top, getName() + "_item_" + item.mName);
+                button->setCaption(item.mCaption);
                 button->getSubWidgetText()->setWordWrap(true);
                 button->getSubWidgetText()->setTextAlign(MyGUI::Align::Left);
                 button->eventMouseWheel += MyGUI::newDelegate(this, &MWList::onMouseWheelMoved);

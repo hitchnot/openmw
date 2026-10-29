@@ -409,12 +409,23 @@ namespace MWGui
         }
     }
 
-    void DialogueWindow::onSelectListItem(const std::string& topic, int /*id*/)
+    void DialogueWindow::onSelectListItem(const std::string& topic, int id)
     {
         MWBase::DialogueManager* dialogueManager = MWBase::Environment::get().getDialogueManager();
 
         if (mGoodbye || dialogueManager->isInChoice())
             return;
+
+        if (id >= 0 && static_cast<std::size_t>(id) >= mPseudoTopicsStart
+            && static_cast<std::size_t>(id) - mPseudoTopicsStart < mPseudoTopics.size())
+        {
+            // Labels can coincide with ordinary topics or services; dispatch by row, never by label.
+            const std::string topicId = mPseudoTopics[static_cast<std::size_t>(id) - mPseudoTopicsStart].mId;
+            onPseudoTopicActivated(topicId);
+            if (mGoodbyeButton->getEnabled())
+                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
+            return;
+        }
 
         const MWWorld::Store<ESM::GameSetting>& gmst
             = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
@@ -557,10 +568,12 @@ namespace MWGui
 
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)
     {
-        if (mKeywords == keyWords && isCompanion() == mIsCompanion)
+        const auto& pseudoTopics = MWBase::Environment::get().getDialogueManager()->getPseudoTopics(mPtr);
+        if (mKeywords == keyWords && mPseudoTopics == pseudoTopics && isCompanion() == mIsCompanion)
             return false;
         mIsCompanion = isCompanion();
         mKeywords = keyWords;
+        mPseudoTopics = pseudoTopics;
         updateTopicsPane();
         return true;
     }
@@ -641,11 +654,32 @@ namespace MWGui
                 mControllerFocus = mTopicsList->getItemCount() - 1;
         }
 
+        mPseudoTopicsStart = mTopicsList->getItemCount();
+        for (const auto& topic : mPseudoTopics)
+        {
+            // MWList uses item names as widget identities, independently of their captions.
+            std::string name = "PseudoTopic_" + topic.mId;
+            const auto nameUsed = [&] {
+                for (std::size_t i = 0; i < mTopicsList->getItemCount(); ++i)
+                    if (mTopicsList->getItemNameAt(i) == name)
+                        return true;
+                return false;
+            };
+            while (nameUsed())
+                name += '_';
+            mTopicsList->addItem(name, sVerticalPadding, topic.mSkin, topic.mLabel);
+            if (name == focusedTopic)
+                mControllerFocus = mTopicsList->getItemCount() - 1;
+        }
+
         redrawTopicsList();
         updateHistory();
 
         if (Settings::gui().mControllerMenus)
+        {
+            mControllerFocus = std::min(mControllerFocus, mTopicsList->getItemCount());
             setControllerFocus(mControllerFocus, true);
+        }
     }
 
     void DialogueWindow::updateHistory(bool scrollbar)
@@ -835,6 +869,10 @@ namespace MWGui
 
         updateDisposition();
         deleteLater();
+
+        // Also catch edits made while a service window covered this conversation.
+        if (mPseudoTopics != MWBase::Environment::get().getDialogueManager()->getPseudoTopics(mPtr))
+            updateTopics();
 
         if (mChoices != MWBase::Environment::get().getDialogueManager()->getChoices()
             || mGoodbye != MWBase::Environment::get().getDialogueManager()->isGoodbye())
