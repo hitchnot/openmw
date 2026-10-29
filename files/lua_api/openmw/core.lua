@@ -13,12 +13,15 @@
 ---
 -- Read-only table of optional engine extensions and their versions.
 -- This build provides `watch = 1`, `ipc = 1`, `dialogue = 1`, `journal_custom = 1` and `records = 1` (@{openmw.world#world.records}); absent keys indicate unavailable extensions.
--- `events` lists the engine handlers and events this build fires outside any versioned extension: the handlers `onDropped` and `onPlaced`, and the events `CrimeCommitted`, `RestStarted`, `RestEnded` and `TravelTaken`, sent to the player's local scripts, at most 64 a frame. An extension's version covers its own events.
+-- `events` lists the engine handlers and events this build fires outside any versioned extension: the handlers `onDropped` and `onPlaced`, and the events `CrimeCommitted`, `RestStarted`, `RestEnded`, `TravelTaken`, `LockPicked`, `LockFailed`, `SpellCast` and `LevelUp`, sent to the player's local scripts, sharing a limit of 64 events a frame. Excess events are counted and dropped without suppressing game behaviour. An extension's version covers its own events.
 --
 --   * `CrimeCommitted`: `{type, victim?, faction?, witnessed, bounty}`. `type` is `theft`, `assault`, `murder`, `trespassing`, `sleeping_in_owned_bed` or `pickpocket`; `victim` is a GameObject; `faction` a faction id; `witnessed` whether anyone saw it; `bounty` what it added to the player's bounty.
 --   * `RestStarted`: `{hours, interrupted = false}`, the hours asked for, when a rest or wait begins.
 --   * `RestEnded`: `{hours, interrupted}`, the hours that passed, when it ends; `interrupted` when it ended early.
 --   * `TravelTaken`: `{service, fromCell, toCell, price}` after a paid travel service. `service` is the provider's class id for an NPC, else its record id; the cells are ids as `cell.id` gives them.
+--   * `LockPicked` / `LockFailed`: `{object}`, the attempted GameObject, after a lock-pick attempt succeeds or fails (including an impossible lock). An unlocked object or a worn-out pick causes no attempt and no event; probing traps and Open spells are separate paths.
+--   * `SpellCast`: `{caster, spell, target?}` after a successful spell cast, including powers and scripted casts. `caster` and the available cast-time `target` are GameObjects; `spell` is the spell record id. Failed casts, item enchantments, potions and non-actor casters do not emit this event. Player casts are reported by default; `[Lua] dmo hooks spell cast all actors = true` includes other actors. The setting defaults to false and is read at startup. A projectile's eventual hit is not known at cast time.
+--   * `LevelUp`: `{level}`, the committed integer level after confirming the level-up dialog. Opening the dialog or directly setting a level through scripts does not emit it.
 -- Extensions are versioned here independently of `API_REVISION`, which remains 129.
 -- @field [parent=#core] #table API_EXTENSIONS
 

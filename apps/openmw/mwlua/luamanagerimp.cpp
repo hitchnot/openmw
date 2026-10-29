@@ -29,6 +29,7 @@
 #include "../mwrender/bonegroup.hpp"
 #include "../mwrender/postprocessor.hpp"
 
+#include "../mwworld/class.hpp"
 #include "../mwworld/datetimemanager.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/player.hpp"
@@ -80,6 +81,7 @@ namespace MWLua
     LuaManager::LuaManager(const VFS::Manager* vfs, const std::filesystem::path& libsDir)
         : mLua(vfs, &mConfiguration, createLuaStateSettings())
         , mIpc(static_cast<std::size_t>(Settings::lua().mDmoIpcMaxQueue.get()))
+        , mSpellCastAllActors(Settings::lua().mDmoHooksSpellCastAllActors)
     {
         Log(Debug::Info) << "Lua version: " << LuaUtil::getLuaVersion();
         mLua.addInternalLibSearchPath(libsDir);
@@ -571,6 +573,33 @@ namespace MWLua
             data["toCell"] = toCell.serializeText();
             data["price"] = price;
         });
+    }
+
+    void LuaManager::onLockPicked(const MWWorld::Ptr& object)
+    {
+        notifyEngineEvent("LockPicked", [&](sol::table& data) { data["object"] = LObject(object); });
+    }
+
+    void LuaManager::onLockFailed(const MWWorld::Ptr& object)
+    {
+        notifyEngineEvent("LockFailed", [&](sol::table& data) { data["object"] = LObject(object); });
+    }
+
+    void LuaManager::onSpellCast(const MWWorld::Ptr& caster, const ESM::RefId& spell, const MWWorld::Ptr& target)
+    {
+        if (caster.isEmpty() || !caster.getClass().isActor() || (caster != mPlayer && !mSpellCastAllActors))
+            return;
+        notifyEngineEvent("SpellCast", [&](sol::table& data) {
+            data["caster"] = LObject(caster);
+            data["spell"] = spell.serializeText();
+            if (!target.isEmpty())
+                data["target"] = LObject(target);
+        });
+    }
+
+    void LuaManager::onLevelUp(int level)
+    {
+        notifyEngineEvent("LevelUp", [&](sol::table& data) { data["level"] = level; });
     }
 
     void LuaManager::useItem(const MWWorld::Ptr& object, const MWWorld::Ptr& actor, bool force)

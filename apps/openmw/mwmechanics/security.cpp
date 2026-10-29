@@ -7,6 +7,7 @@
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -55,6 +56,7 @@ namespace MWMechanics
         MWBase::Environment::get().getMechanicsManager()->unlockAttempted(mActor, lock);
 
         resultSound = "Open Lock Fail";
+        bool picked = false;
         if (x <= 0)
             resultMessage = "#{sLockImpossible}";
         else
@@ -63,6 +65,7 @@ namespace MWMechanics
             if (Misc::Rng::roll0to99(prng) <= x)
             {
                 lock.getCellRef().unlock();
+                picked = true;
                 resultMessage = "#{sLockSuccess}";
                 resultSound = "Open Lock";
                 mActor.getClass().skillUsageSucceeded(mActor, ESM::Skill::Security, ESM::Skill::Security_PickLock);
@@ -74,6 +77,11 @@ namespace MWMechanics
         lockpick.getCellRef().setCharge(--uses);
         if (!uses)
             lockpick.getContainerStore()->remove(lockpick, 1);
+
+        if (picked)
+            MWBase::Environment::get().getLuaManager()->onLockPicked(lock);
+        else
+            MWBase::Environment::get().getLuaManager()->onLockFailed(lock);
     }
 
     void Security::probeTrap(const MWWorld::Ptr& trap, const MWWorld::Ptr& probe, std::string_view& resultMessage,

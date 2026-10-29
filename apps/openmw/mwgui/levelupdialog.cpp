@@ -12,6 +12,7 @@
 #include <components/widgets/box.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/soundmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
@@ -259,6 +260,7 @@ namespace MWGui
             }
 
             pcStats.levelUp();
+            MWBase::Environment::get().getLuaManager()->onLevelUp(pcStats.getLevel());
 
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Levelup);
         }

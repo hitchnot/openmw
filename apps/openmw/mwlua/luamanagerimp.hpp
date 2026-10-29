@@ -129,6 +129,10 @@ namespace MWLua
         void onRestEnded(int hours, bool interrupted) override;
         void onTravelTaken(
             const ESM::RefId& service, const ESM::RefId& fromCell, const ESM::RefId& toCell, int price) override;
+        void onLockPicked(const MWWorld::Ptr& object) override;
+        void onLockFailed(const MWWorld::Ptr& object) override;
+        void onSpellCast(const MWWorld::Ptr& caster, const ESM::RefId& spell, const MWWorld::Ptr& target) override;
+        void onLevelUp(int level) override;
 
         MWBase::LuaManager::ActorControls* getActorControls(const MWWorld::Ptr&) const override;
 
@@ -204,6 +208,9 @@ namespace MWLua
         IpcManager& ipc() { return mIpc; }
 
     private:
+        // Bootstraps the player event consumer in tests without a renderer or GUI.
+        friend class EngineHooksTest;
+
         void initConfiguration(bool reload);
         LocalScripts* createLocalScripts(const MWWorld::Ptr& ptr,
             std::optional<LuaUtil::ScriptIdsWithInitializationData> autoStartConf = std::nullopt);
@@ -235,6 +242,7 @@ namespace MWLua
 
         MWWorld::Ptr mPlayer;
         EngineHookGate mHooks;
+        const bool mSpellCastAllActors;
 
         LuaEvents mLuaEvents{ mGlobalScripts, mMenuScripts };
         EngineEvents mEngineEvents{ mGlobalScripts };

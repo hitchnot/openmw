@@ -9,6 +9,7 @@
 #include <components/misc/strings/format.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/soundmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
@@ -439,6 +440,8 @@ namespace MWMechanics
             inflict(mTarget, spell->mEffects, ESM::RT_Touch);
 
         launchMagicBolt();
+
+        MWBase::Environment::get().getLuaManager()->onSpellCast(mCaster, spell->mId, mTarget);
 
         return true;
     }

@@ -112,6 +112,10 @@ namespace MWBase
         virtual void onTravelTaken(
             const ESM::RefId& service, const ESM::RefId& fromCell, const ESM::RefId& toCell, int price)
             = 0;
+        virtual void onLockPicked(const MWWorld::Ptr& object) = 0;
+        virtual void onLockFailed(const MWWorld::Ptr& object) = 0;
+        virtual void onSpellCast(const MWWorld::Ptr& caster, const ESM::RefId& spell, const MWWorld::Ptr& target) = 0;
+        virtual void onLevelUp(int level) = 0;
         virtual void questUpdated(const ESM::RefId& questId, int stage) = 0;
         virtual void onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId) = 0;
         virtual void onDialogueChoiceSelected(const MWWorld::Ptr& actor, const std::string& offerId,

@@ -600,15 +600,17 @@ namespace
                 for _, name in ipairs(extensions.events) do
                     names[#names + 1] = name
                 end
-                local expected = { "onDropped", "onPlaced", "CrimeCommitted", "RestStarted", "RestEnded", "TravelTaken" }
+                local expected = { "onDropped", "onPlaced", "CrimeCommitted", "RestStarted", "RestEnded", "TravelTaken",
+                    "LockPicked", "LockFailed", "SpellCast", "LevelUp" }
                 assert(#names == #expected, #names)
                 for i, name in ipairs(expected) do
                     assert(names[i] == name, names[i])
                 end
                 assert(#extensions.events == #expected)
-                assert(not pcall(function() extensions.events[7] = "onActivate" end))
+                assert(not pcall(function() extensions.events[#expected + 1] = "onActivate" end))
                 assert(not pcall(function() extensions.events = {} end))
-            )", sol::script_pass_on_error);
+            )",
+                sol::script_pass_on_error);
             if (!result.valid())
                 error = result.get<sol::error>().what();
         });
