@@ -1,6 +1,7 @@
 #include <apps/openmw/mwbase/environment.hpp>
 #include <apps/openmw/mwclass/npc.hpp>
 #include <apps/openmw/mwdialogue/dialoguemanagerimp.hpp>
+#include <apps/openmw/mwgui/dialogue_ext.hpp>
 #include <apps/openmw/mwlua/dialoguebindings_ext.hpp>
 #include <apps/openmw/mwlua/object.hpp>
 #include <apps/openmw/mwworld/esmstore.hpp>
@@ -103,10 +104,9 @@ namespace
                         [this](const std::string& id) {
                             if (!canSelect(id))
                                 return;
-                            if (Misc::StringUtils::ciEqual(id, "ordinary"))
-                                mDialogue.keywordSelected(id, nullptr);
-                            else
-                                mDialogue.selectPseudoTopic(mOpenActor, id);
+                            MWGui::dispatchDialogueTopic(
+                                id, mVisible, [&] { mDialogue.selectPseudoTopic(mOpenActor, id); },
+                                [&] { mDialogue.keywordSelected(id, nullptr); });
                         },
                         [this] { refresh(); } });
                 sol::table interfaces = lua.create_table();
@@ -228,6 +228,24 @@ namespace
         drain(); // Removal invalidates a selection already queued for this entry.
         EXPECT_TRUE(mVisible.empty());
         EXPECT_EQ(mDialogue.mSelections.size(), 2);
+    }
+
+    TEST_F(dmoDialoguePseudoTopics, PublicInterfaceSelectsPseudoTopicWhenIdMatchesOrdinaryTopic)
+    {
+        run("I.Dialogue.addPseudoTopic(first, 'ordinary', 'Pseudo-topic')");
+        drain();
+        run("assert(I.Dialogue.selectTopic('ORDINARY'))");
+        drain();
+        ASSERT_EQ(mDialogue.mSelections.size(), 1);
+        EXPECT_EQ(mDialogue.mSelections[0], (std::pair{ mFirst, std::string("ordinary") }));
+        EXPECT_EQ(mDialogue.mVanillaResponses, 0);
+
+        run("I.Dialogue.removePseudoTopic(first, 'ordinary')");
+        drain();
+        run("assert(I.Dialogue.selectTopic('ordinary'))");
+        drain();
+        EXPECT_EQ(mDialogue.mSelections.size(), 1);
+        EXPECT_EQ(mDialogue.mVanillaResponses, 1);
     }
 
     TEST_F(dmoDialoguePseudoTopics, RefreshAndEditsPreserveChoicesAndRespectSelectionGuards)

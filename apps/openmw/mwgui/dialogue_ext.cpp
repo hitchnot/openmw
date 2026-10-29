@@ -1,3 +1,5 @@
+#include "dialogue_ext.hpp"
+
 #include "dialogue.hpp"
 #include "windowmanagerimp.hpp"
 
@@ -9,6 +11,16 @@
 
 namespace MWGui
 {
+    void dispatchDialogueTopic(std::string_view topicId, const std::vector<MWDialogue::PseudoTopic>& pseudoTopics,
+        const std::function<void()>& pseudo, const std::function<void()>& ordinary)
+    {
+        if (std::any_of(pseudoTopics.begin(), pseudoTopics.end(),
+                [&](const auto& topic) { return Misc::StringUtils::ciEqual(topic.mId, topicId); }))
+            pseudo();
+        else
+            ordinary();
+    }
+
     bool DialogueWindow::canSelectTopic(std::string_view topicId) const
     {
         if (mPtr.isEmpty() || mGoodbye || MWBase::Environment::get().getDialogueManager()->isInChoice())
@@ -22,14 +34,8 @@ namespace MWGui
     void DialogueWindow::selectTopic(const std::string& topicId)
     {
         if (canSelectTopic(topicId))
-        {
-            // Ordinary topics keep their response path even if a pseudo-topic uses the same id.
-            if (std::any_of(mKeywords.begin(), mKeywords.end(),
-                    [&](const auto& keyword) { return Misc::StringUtils::ciEqual(keyword, topicId); }))
-                onTopicActivated(topicId);
-            else
-                onPseudoTopicActivated(topicId);
-        }
+            dispatchDialogueTopic(
+                topicId, mPseudoTopics, [&] { onPseudoTopicActivated(topicId); }, [&] { onTopicActivated(topicId); });
     }
 
     void DialogueWindow::onPseudoTopicActivated(const std::string& topicId)

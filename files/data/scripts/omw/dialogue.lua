@@ -80,9 +80,9 @@ return {
 
         --- Select a listed topic through the same response path as a topic click.
         -- Topic ids are matched without case sensitivity; service labels are not topics.
-        -- Pseudo-topics are selected by id, not label. If an ordinary topic has the same
-        -- id, selectTopic selects the ordinary topic; clicking the pseudo-topic still
-        -- selects its own entry. Use distinct ids to drive pseudo-topics from scripts.
+        -- Pseudo-topics are selected by id, not label, and take precedence when an
+        -- ordinary topic has the same id. Clicking an ordinary row still selects
+        -- the ordinary topic.
         -- Availability is checked again when the queued request executes.
         -- @function [parent=#Dialogue] selectTopic
         -- @param #string topicId Topic id.
