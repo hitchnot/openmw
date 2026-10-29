@@ -1,5 +1,7 @@
 #include "tradewindow.hpp"
 
+#include <map>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_ControllerManager.h>
 #include <MyGUI_ControllerRepeatClick.h>
@@ -13,6 +15,7 @@
 #include "../mwbase/dialoguemanager.hpp"
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
@@ -462,6 +465,14 @@ namespace MWGui
             return;
         }
 
+        // Snapshot record counts before transfers clear the borrowed lists and move or merge the stacks.
+        std::map<ESM::RefId, int> bought;
+        std::map<ESM::RefId, int> sold;
+        for (const ItemStack& item : playerBought)
+            bought[item.mBase.getCellRef().getRefId()] += static_cast<int>(item.mCount);
+        for (const ItemStack& item : merchantBought)
+            sold[item.mBase.getCellRef().getRefId()] += static_cast<int>(item.mCount);
+
         // make the item transfer
         mTradeModel->transferItems();
         playerItemModel->transferItems();
@@ -473,6 +484,8 @@ namespace MWGui
             mPtr.getClass().getCreatureStats(mPtr).setGoldPool(
                 mPtr.getClass().getCreatureStats(mPtr).getGoldPool() - mCurrentBalance);
         }
+
+        MWBase::Environment::get().getLuaManager()->onBarterCompleted(mPtr, bought, sold, mCurrentBalance);
 
         eventTradeDone();
 

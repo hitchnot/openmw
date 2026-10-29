@@ -8,6 +8,7 @@
 #include <MyGUI_ScrollView.h>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
@@ -165,6 +166,9 @@ namespace MWGui
         // add gold to NPC trading gold pool
         MWMechanics::CreatureStats& actorStats = mActor.getClass().getCreatureStats(mActor);
         actorStats.setGoldPool(actorStats.getGoldPool() + price);
+
+        MWBase::Environment::get().getLuaManager()->onServiceUsed(
+            "repair", mActor, { { "record", item.getCellRef().getRefId().serializeText() }, { "price", price } });
 
         setPtr(mActor);
     }

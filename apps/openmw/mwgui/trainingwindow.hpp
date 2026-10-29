@@ -29,7 +29,11 @@ namespace MWGui
 
         WindowBase* getProgressBar() { return &mProgressBar; }
 
-        void clear() override { resetReference(); }
+        void clear() override
+        {
+            resetReference();
+            mTrainingActor = MWWorld::Ptr();
+        }
 
         std::string_view getWindowIdForLua() const override { return "Training"; }
 
@@ -53,6 +57,10 @@ namespace MWGui
 
         WaitDialogProgressBar mProgressBar;
         TimeAdvancer mTimeAdvancer;
+
+        MWWorld::Ptr mTrainingActor;
+        ESM::RefId mTrainingSkill;
+        int mTrainingPrice = 0;
 
         bool onControllerButtonEvent(const SDL_ControllerButtonEvent& arg) override;
         size_t mControllerFocus = 0;

@@ -16,6 +16,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
@@ -667,6 +668,9 @@ namespace MWGui
         MWMechanics::CreatureStats& stats = player.getClass().getCreatureStats(player);
         MWMechanics::Spells& spells = stats.getSpells();
         spells.add(spell->mId);
+
+        MWBase::Environment::get().getLuaManager()->onServiceUsed(
+            "spellmaking", mPtr, { { "spell", spell->mId.serializeText() }, { "price", price } });
 
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_SpellCreation);
     }

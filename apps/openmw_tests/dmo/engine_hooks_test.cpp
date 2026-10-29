@@ -1,6 +1,7 @@
 #include <apps/openmw/mwbase/environment.hpp>
 #include <apps/openmw/mwclass/container.hpp>
 #include <apps/openmw/mwclass/npc.hpp>
+#include <apps/openmw/mwgui/tradeitemmodel.hpp>
 #include <apps/openmw/mwlua/context.hpp>
 #include <apps/openmw/mwlua/enginehooks.hpp>
 #include <apps/openmw/mwlua/luamanagerimp.hpp>
@@ -21,6 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -54,7 +56,8 @@ namespace MWLua
         TestingOpenMW::VFSTestFile mScript{ R"(
             local received = require('test.observer').received
             local handlers = {}
-            for _, name in ipairs({'LockPicked', 'LockFailed', 'SpellCast', 'LevelUp', 'RestStarted'}) do
+            for _, name in ipairs({'LockPicked', 'LockFailed', 'SpellCast', 'LevelUp', 'RestStarted',
+                                  'BarterCompleted', 'ServiceUsed'}) do
                 handlers[name] = function(data)
                     received[#received + 1] = {name = name, data = data}
                 end
@@ -237,25 +240,128 @@ namespace MWLua
         )");
     }
 
+    TEST_F(dmoEngineHookEvents, BarterCompletedReportsMerchantRecordCountsAndSignedGold)
+    {
+        start();
+        const std::map<ESM::RefId, int> bought{ { ESM::RefId::stringRefId("iron_arrow"), 20 },
+            { ESM::RefId::stringRefId("restore_health"), 3 } };
+        const std::map<ESM::RefId, int> sold{ { ESM::RefId::stringRefId("iron_dagger"), 2 } };
+        mManager->onBarterCompleted(mActor, bought, sold, -35);
+        mManager->onBarterCompleted(mActor, {}, sold, 12);
+        mManager->onBarterCompleted(mActor, bought, {}, 0);
+        check("assert(#received == 0)");
+        deliver();
+        check(R"(
+            assert(#received == 3)
+            for _, event in ipairs(received) do
+                assert(event.name == 'BarterCompleted')
+                assert(event.data.actor == actor and event.data.actor.recordId == 'test_actor')
+            end
+            local data = received[1].data
+            assert(#data.bought == 2 and #data.sold == 1 and data.gold == -35)
+            local bought = {}
+            for _, item in ipairs(data.bought) do bought[item.record] = item.count end
+            assert(bought.iron_arrow == 20 and bought.restore_health == 3)
+            assert(data.sold[1].record == 'iron_dagger' and data.sold[1].count == 2)
+            assert(#received[2].data.bought == 0 and received[2].data.gold == 12)
+            assert(#received[3].data.sold == 0 and received[3].data.gold == 0)
+        )");
+    }
+
+    TEST_F(dmoEngineHookEvents, CancelledBarterProducesNoCompletion)
+    {
+        start();
+        // Exercise the same abort operations as TradeWindow::exit without constructing GUI widgets.
+        class OfferItems : public MWGui::ProxyItemModel
+        {
+        public:
+            MWGui::ItemStack mItem;
+            MWGui::ItemStack getItem(ModelIndex) override { return mItem; }
+            size_t getItemCount() override { return 1; }
+            void update() override {}
+        };
+        OfferItems source;
+        source.mItem.mBase = mLock;
+        source.mItem.mCount = 3;
+        MWGui::TradeItemModel playerItems(nullptr, {});
+        MWGui::TradeItemModel merchantItems(nullptr, mActor);
+        playerItems.borrowItemToUs(0, &source, 2);
+        merchantItems.borrowItemToUs(0, &source, 1);
+        merchantItems.abort();
+        playerItems.abort();
+        deliver();
+        check("assert(#received == 0)");
+
+        // A subsequent completed transaction is still delivered to the same Lua consumer.
+        mManager->onBarterCompleted(mActor, { { ESM::RefId::stringRefId("iron_arrow"), 5 } }, {}, -10);
+        deliver();
+        check(R"(
+            assert(#received == 1 and received[1].name == 'BarterCompleted')
+            local data = received[1].data
+            assert(data.actor == actor and data.gold == -10)
+            assert(#data.bought == 1 and data.bought[1].record == 'iron_arrow' and data.bought[1].count == 5)
+            assert(#data.sold == 0)
+        )");
+    }
+
+    TEST_F(dmoEngineHookEvents, ServiceUsedReportsServiceActorAndOnlySuppliedDetail)
+    {
+        start();
+        const std::string createdSpell = ESM::RefId::generated(42).serializeText();
+        check("createdSpell = '" + createdSpell + "'");
+        mManager->onServiceUsed("training", mActor, { { "skill", std::string("alchemy") }, { "price", 50 } });
+        mManager->onServiceUsed("spells", mActor, { { "spell", mSpell.serializeText() }, { "price", 20 } });
+        mManager->onServiceUsed("spellmaking", mActor, { { "spell", createdSpell }, { "price", 100 } });
+        mManager->onServiceUsed("enchanting", mActor,
+            { { "record", std::string("enchanted_arrow") }, { "count", 10 },
+                { "enchantment", std::string("test_enchantment") } });
+        mManager->onServiceUsed("repair", mActor, { { "record", std::string("iron_dagger") }, { "price", 4 } });
+        mManager->onServiceUsed("training", mActor);
+        check("assert(#received == 0)");
+        deliver();
+        check(R"(
+            local services = {'training', 'spells', 'spellmaking', 'enchanting', 'repair', 'training'}
+            assert(#received == #services)
+            for i, event in ipairs(received) do
+                assert(event.name == 'ServiceUsed' and event.data.service == services[i])
+                assert(event.data.actor == actor and event.data.actor.recordId == 'test_actor')
+            end
+            assert(received[1].data.detail.skill == 'alchemy' and received[1].data.detail.price == 50)
+            assert(received[2].data.detail.spell == 'test_spell' and received[2].data.detail.price == 20)
+            assert(received[3].data.detail.spell == createdSpell and received[3].data.detail.price == 100)
+            local enchanted = received[4].data.detail
+            assert(enchanted.record == 'enchanted_arrow' and enchanted.count == 10)
+            assert(enchanted.enchantment == 'test_enchantment' and enchanted.price == nil)
+            assert(received[5].data.detail.record == 'iron_dagger' and received[5].data.detail.price == 4)
+            assert(received[6].data.detail == nil)
+        )");
+    }
+
     TEST_F(dmoEngineHookEvents, NewHooksShareTheExistingFrameCap)
     {
         start();
-        for (int i = 0; i < 60; ++i)
+        for (int i = 0; i < 58; ++i)
             mManager->onRestStarted(1);
         mManager->onLockPicked(mLock);
         mManager->onLockFailed(mLock);
         mManager->onSpellCast(mPlayer, mSpell, {});
         mManager->onLevelUp(7);
+        mManager->onBarterCompleted(mActor, {}, {}, 0);
+        mManager->onServiceUsed("repair", mActor);
         mManager->onLockPicked(mLock);
         mManager->onLockFailed(mLock);
         mManager->onSpellCast(mPlayer, mSpell, {});
         mManager->onLevelUp(8);
+        mManager->onBarterCompleted(mActor, {}, {}, 1);
+        mManager->onServiceUsed("spells", mActor);
         deliver();
         check(R"(
             assert(#received == 64)
-            assert(received[61].name == 'LockPicked' and received[62].name == 'LockFailed')
-            assert(received[63].name == 'SpellCast' and received[64].name == 'LevelUp')
-            assert(received[64].data.level == 7)
+            assert(received[59].name == 'LockPicked' and received[60].name == 'LockFailed')
+            assert(received[61].name == 'SpellCast' and received[62].name == 'LevelUp')
+            assert(received[62].data.level == 7)
+            assert(received[63].name == 'BarterCompleted' and received[63].data.gold == 0)
+            assert(received[64].name == 'ServiceUsed' and received[64].data.service == 'repair')
         )");
     }
 }

@@ -116,6 +116,13 @@ namespace MWBase
         virtual void onLockFailed(const MWWorld::Ptr& object) = 0;
         virtual void onSpellCast(const MWWorld::Ptr& caster, const ESM::RefId& spell, const MWWorld::Ptr& target) = 0;
         virtual void onLevelUp(int level) = 0;
+        virtual void onBarterCompleted(const MWWorld::Ptr& actor, const std::map<ESM::RefId, int>& bought,
+            const std::map<ESM::RefId, int>& sold, int gold)
+            = 0;
+        using ServiceDetail = std::map<std::string, std::variant<int, std::string>>;
+        virtual void onServiceUsed(
+            std::string_view service, const MWWorld::Ptr& actor, const ServiceDetail& detail = {})
+            = 0;
         virtual void questUpdated(const ESM::RefId& questId, int stage) = 0;
         virtual void onDialogueTopicSelected(const MWWorld::Ptr& actor, const std::string& topicId) = 0;
         virtual void onDialogueChoiceSelected(const MWWorld::Ptr& actor, const std::string& offerId,

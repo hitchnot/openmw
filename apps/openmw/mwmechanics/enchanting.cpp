@@ -10,6 +10,7 @@
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -112,6 +113,11 @@ namespace MWMechanics
         // Add the new item to player inventory and remove the old one
         store.remove(mOldItemPtr, count);
         store.add(newItemId, count);
+
+        if (!mSelfEnchanting)
+            MWBase::Environment::get().getLuaManager()->onServiceUsed("enchanting", mEnchanter,
+                { { "record", newItemId.serializeText() }, { "count", count },
+                    { "enchantment", enchantmentPtr->mId.serializeText() } });
 
         return true;
     }

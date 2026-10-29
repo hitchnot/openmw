@@ -602,6 +602,41 @@ namespace MWLua
         notifyEngineEvent("LevelUp", [&](sol::table& data) { data["level"] = level; });
     }
 
+    void LuaManager::onBarterCompleted(const MWWorld::Ptr& actor, const std::map<ESM::RefId, int>& bought,
+        const std::map<ESM::RefId, int>& sold, int gold)
+    {
+        notifyEngineEvent("BarterCompleted", [&](sol::table& data) {
+            sol::state_view lua(data.lua_state());
+            auto items = [&](const std::map<ESM::RefId, int>& counts) {
+                sol::table result = lua.create_table();
+                int index = 1;
+                for (const auto& [record, count] : counts)
+                    result[index++] = lua.create_table_with("record", record.serializeText(), "count", count);
+                return result;
+            };
+            data["actor"] = LObject(actor);
+            data["bought"] = items(bought);
+            data["sold"] = items(sold);
+            data["gold"] = gold;
+        });
+    }
+
+    void LuaManager::onServiceUsed(std::string_view service, const MWWorld::Ptr& actor, const ServiceDetail& detail)
+    {
+        notifyEngineEvent("ServiceUsed", [&](sol::table& data) {
+            data["service"] = std::string(service);
+            data["actor"] = LObject(actor);
+            if (!detail.empty())
+            {
+                sol::state_view lua(data.lua_state());
+                sol::table values = lua.create_table();
+                for (const auto& [key, value] : detail)
+                    std::visit([&](const auto& v) { values[key] = v; }, value);
+                data["detail"] = values;
+            }
+        });
+    }
+
     void LuaManager::useItem(const MWWorld::Ptr& object, const MWWorld::Ptr& actor, bool force)
     {
         MWBase::Environment::get().getWorldModel()->registerPtr(object);

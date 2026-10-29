@@ -10,6 +10,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
+#include "../mwbase/luamanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
@@ -191,6 +192,9 @@ namespace MWGui
         // add gold to NPC trading gold pool
         MWMechanics::CreatureStats& npcStats = mPtr.getClass().getCreatureStats(mPtr);
         npcStats.setGoldPool(npcStats.getGoldPool() + price);
+
+        MWBase::Environment::get().getLuaManager()->onServiceUsed(
+            "spells", mPtr, { { "spell", spell->second.serializeText() }, { "price", price } });
 
         setPtr(mPtr, mSpellsView->getViewOffset().top);
 

@@ -201,6 +201,11 @@ namespace MWGui
         MWMechanics::NpcStats& npcStats = mPtr.getClass().getNpcStats(mPtr);
         npcStats.setGoldPool(npcStats.getGoldPool() + price);
 
+        // Snapshot the provider and purchase details; mPtr can be cleared while training advances.
+        mTrainingActor = mPtr;
+        mTrainingSkill = skill->mId;
+        mTrainingPrice = price;
+
         setVisible(false);
         mProgressBar.setVisible(true);
         mProgressBar.setProgress(0, 2);
@@ -222,6 +227,13 @@ namespace MWGui
         // advance time
         MWBase::Environment::get().getMechanicsManager()->rest(2, false);
         MWBase::Environment::get().getWorld()->advanceTime(2);
+
+        if (!mTrainingActor.isEmpty())
+        {
+            MWBase::Environment::get().getLuaManager()->onServiceUsed("training", mTrainingActor,
+                { { "skill", mTrainingSkill.serializeText() }, { "price", mTrainingPrice } });
+            mTrainingActor = MWWorld::Ptr();
+        }
 
         // go back to game mode
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Training);

@@ -133,6 +133,10 @@ namespace MWLua
         void onLockFailed(const MWWorld::Ptr& object) override;
         void onSpellCast(const MWWorld::Ptr& caster, const ESM::RefId& spell, const MWWorld::Ptr& target) override;
         void onLevelUp(int level) override;
+        void onBarterCompleted(const MWWorld::Ptr& actor, const std::map<ESM::RefId, int>& bought,
+            const std::map<ESM::RefId, int>& sold, int gold) override;
+        void onServiceUsed(
+            std::string_view service, const MWWorld::Ptr& actor, const ServiceDetail& detail = {}) override;
 
         MWBase::LuaManager::ActorControls* getActorControls(const MWWorld::Ptr&) const override;
 

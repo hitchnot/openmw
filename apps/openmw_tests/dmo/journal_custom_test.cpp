@@ -601,7 +601,7 @@ namespace
                     names[#names + 1] = name
                 end
                 local expected = { "onDropped", "onPlaced", "CrimeCommitted", "RestStarted", "RestEnded", "TravelTaken",
-                    "LockPicked", "LockFailed", "SpellCast", "LevelUp" }
+                    "LockPicked", "LockFailed", "SpellCast", "LevelUp", "BarterCompleted", "ServiceUsed" }
                 assert(#names == #expected, #names)
                 for i, name in ipairs(expected) do
                     assert(names[i] == name, names[i])
