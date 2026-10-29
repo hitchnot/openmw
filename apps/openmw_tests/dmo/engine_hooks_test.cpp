@@ -152,7 +152,8 @@ namespace MWLua
 
         void check(const std::string& code)
         {
-            const auto result = mManager->mLua.unsafeState().safe_script(code, sol::script_pass_on_error);
+            sol::state_view lua = mManager->mLua.unsafeState();
+            const auto result = lua.safe_script(code, sol::script_pass_on_error);
             ASSERT_TRUE(result.valid()) << result.get<sol::error>().what();
         }
     };
