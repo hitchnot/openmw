@@ -12,6 +12,7 @@
 #include <components/compiler/extensions.hpp>
 #include <components/esm3/esmwriter.hpp>
 #include <components/esm3/formatversion.hpp>
+#include <components/esm3/loadnpc.hpp>
 #include <components/loadinglistener/loadinglistener.hpp>
 #include <components/lua/luastate.hpp>
 #include <components/lua/util.hpp>
